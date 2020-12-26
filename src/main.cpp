@@ -24,7 +24,12 @@
  */
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
-#include "serialengine.h"
+
+#include "grblengine.h"
+#include "grblserial.h"
+#include "grblconsole.h"
+
+#include <memory>
 
 int main(int argc, char *argv[])
 {
@@ -32,11 +37,24 @@ int main(int argc, char *argv[])
 
     QGuiApplication app(argc, argv);
 
-    qmlRegisterSingletonType<SerialPortEngine>("QtGrbl", 1, 0, "SerialEngine", [](QQmlEngine *engine, QJSEngine *){
-        SerialPortEngine *serial = SerialPortEngine::instance();
-        engine->setObjectOwnership(serial, QQmlEngine::CppOwnership);
-        return serial;
-    });
+    std::shared_ptr<QtGrbl::GrblSerial> serialEngine = std::make_shared<QtGrbl::GrblSerial>();
+    std::shared_ptr<QtGrbl::GrblEngine> glrblEngine = std::make_shared<QtGrbl::GrblEngine>();
+    std::shared_ptr<QtGrbl::GrblConsole> console = std::make_shared<QtGrbl::GrblConsole>();
+
+    //Make connections between components
+    glrblEngine->attach(serialEngine);
+    QObject::connect(console.get(), qOverload<const QString &, QtGrbl::CommandPriority>(&QtGrbl::GrblConsole::sendCommand),
+                     serialEngine.get(), qOverload<const QString &, QtGrbl::CommandPriority>(&QtGrbl::GrblSerial::sendCommand));
+    QObject::connect(serialEngine.get(), &QtGrbl::GrblSerial::commandSent,
+                     console.get(), &QtGrbl::GrblConsole::writeCommand);
+    QObject::connect(serialEngine.get(), &QtGrbl::GrblSerial::responseReceived,
+                     console.get(), &QtGrbl::GrblConsole::writeResponse);
+
+    QtGrbl::qmlRegisterGrblSingleton("GrblSerial", serialEngine);
+    QtGrbl::qmlRegisterGrblSingleton("GrblEngine", glrblEngine);
+    QtGrbl::qmlRegisterGrblSingleton("GrblConsole", console);
+
+    qmlRegisterUncreatableType<QtGrbl::GrblConsoleRecord>("QtGrbl", 1, 0, "GrblConsoleRecord", "Uncreatable");
 
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/main.qml"));

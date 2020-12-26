@@ -23,37 +23,58 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <QObject>
+#pragma once
 
-#include <QState>
-#include <QStateMachine>
-#include <QPointer>
+#include <QFile>
 
-class SerialPortEngine;
+#include "universallistmodel.h"
+#include "grblconsolerecord.h"
+#include "qtgrblcommon.h"
 
-class SerialStateMachine : public QObject
+namespace QtGrbl {
+
+class GrblConsole : public UniversalListModel<GrblConsoleRecord>
 {
     Q_OBJECT
-    Q_PROPERTY(State state READ state NOTIFY stateChanged)
+    Q_PROPERTY(bool saveToFile READ saveToFile WRITE setSaveToFile NOTIFY saveToFileChanged)
+
 public:
-    enum State {
-        Disconnected,
-        Connected,
-        Progress,
-        Paused
-    };
-    explicit SerialStateMachine(SerialPortEngine *engine, QObject *parent = nullptr);
-    virtual ~SerialStateMachine();
-    State state() const
-    {
-        return m_state;
+    GrblConsole(QObject *parent = nullptr);
+    virtual ~GrblConsole() = default;
+
+    Q_INVOKABLE void save(const QString &filePath);
+    Q_INVOKABLE void clear();
+    Q_INVOKABLE void sendCommand(const QString &command) {
+        //For user command default priority is Front
+        sendCommand(command, QtGrbl::CommandPriority::Front);
+    }
+
+    void writeCommand(const QByteArray &buffer);
+    void writeResponse(const QByteArray &buffer);
+
+    bool saveToFile() const {
+        return m_logFile.isOpen();
+    }
+
+    void setSaveToFile(bool saveToFile) {
+        if (m_logFile.isOpen() && !saveToFile) {
+            m_logFile.close();
+        } else if(!m_logFile.isOpen() && saveToFile) {
+            m_logFile.open(QFile::WriteOnly);
+        }
+
+        emit saveToFileChanged();
     }
 
 signals:
-    void stateChanged(State state);
+    //! Do not use this method directly
+    void sendCommand(const QString &command, QtGrbl::CommandPriority prio);
+    void saveToFileChanged();
 
 private:
-    QStateMachine m_machine;
-    QPointer<SerialPortEngine> m_engine;
-    State m_state;
+    QFile m_logFile;
+    bool m_saveToFile;
 };
+
+}
+

@@ -26,37 +26,38 @@
 import QtQuick 2.15
 import QtQuick.Window 2.15
 import QtQuick.Controls 2.5
-import QtGrbl 1.0
 import QtQuick.Layouts 1.12
 import QtQuick.Dialogs 1.3
+
+import QtGrbl 1.0
 
 Window {
     width: 640
     height: 480
-    title: qsTr("Hello World")
+    title: qsTr("QtGrbl")
     ToolBar {
         id: toolBar
         Row {
             ComboBox {
                 id: portSelector
-                model: SerialEngine.portList
+                model: GrblSerial.portList
             }
             Button {
                 text: "Connect" //TODO: Check state machine state here ? "Connect" : "Disconnect"
                 onClicked: {
-                    SerialEngine.connectPort(portSelector.currentIndex)
+                    GrblSerial.connectPort(portSelector.currentIndex)
                 }
             }
             Button {
                 text: "Clear"
                 onClicked: {
-                    SerialEngine.clearOutput()
+                    GrblConsole.clear()
                 }
             }
             Button {
                 text: "Clear error"
                 onClicked: {
-                    SerialEngine.clearError()
+                    GrblSerial.clearError()
                 }
             }
             Button {
@@ -68,20 +69,26 @@ Window {
             Button {
                 text: "Start"
                 onClicked: {
-                    SerialEngine.start();//TODO: not a SerialEngine functionality
+                    GrblEngine.start();//TODO: not a SerialEngine functionality
                 }
             }
             Button {
                 text: "Reset to 0"
                 onClicked: {
-                    SerialEngine.resetToZero();//TODO: not a SerialEngine functionality
+                    GrblEngine.resetToZero();//TODO: not a SerialEngine functionality
+                }
+            }
+            Button {
+                text: "Return to 0"
+                onClicked: {
+                    GrblEngine.returnToZero();//TODO: not a SerialEngine functionality
                 }
             }
         }
     }
 
     ConsoleOutput {
-        text: SerialEngine.consoleOutput
+        model: GrblConsole
         anchors {
             left: parent.left
             right: parent.right
@@ -95,7 +102,7 @@ Window {
         selectMultiple: false
         selectFolder: false
         onAccepted: {
-            SerialEngine.filePath = fileSelection.fileUrl;//TODO: not a SerialEngine functionality
+            GrblEngine.filePath = fileSelection.fileUrl;//TODO: not a SerialEngine functionality
         }
     }
 
@@ -112,10 +119,11 @@ Window {
             bottom: parent.bottom
         }
         onAccepted: {
-            SerialEngine.sendCommand(consoleInput.text)
+            GrblConsole.sendCommand(consoleInput.text)
             consoleInput.text = "";
         }
     }
+
     Component.onCompleted: {
         showMaximized()
     }

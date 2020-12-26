@@ -1,7 +1,3 @@
-#pragma once
-
-#include <QObject>
-#include <QStringList>
 /*
  * MIT License
  *
@@ -26,41 +22,42 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+
+#pragma once
+
+#include <QObject>
+#include <QStringList>
 #include <memory>
 #include <QQueue>
-#include <QFile>
-#include <QFileInfo>
+
+#include "qtgrblcommon.h"
 
 class QSerialPort;
-class SerialStateMachine;
 
-class SerialPortEngine : public QObject
+namespace QtGrbl {
+
+class GrblSerial : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QStringList portList READ portList NOTIFY portListChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
-    Q_PROPERTY(QString consoleOutput READ consoleOutput NOTIFY consoleOutputChanged)
-    Q_PROPERTY(QString filePath READ filePath WRITE setFilePath NOTIFY filePathChanged)//TODO: not a SerialEngine functionality
-    Q_ENUMS(Status)
 public:
     enum Status {
-        Idle,
-        Busy,
-        Error
+        Idle, //! No command is sent, no response awaiting
+        Busy, //! Command is sent, awating for response
+        Error //! Error occured, clear error is required
     };
+    Q_ENUM(Status)
 
-    static SerialPortEngine *instance() {
-        static SerialPortEngine _instance;
-        return &_instance;
-    }
+    explicit GrblSerial(QObject *parent = nullptr);
+    virtual ~GrblSerial();
+
     Q_INVOKABLE void updatePortList();
     Q_INVOKABLE void connectPort(int portIndex);
-    Q_INVOKABLE void sendCommand(const QString &command);
-    Q_INVOKABLE void sendCommand(QByteArray command);
-    Q_INVOKABLE void clearOutput();
     Q_INVOKABLE void clearError();
-    Q_INVOKABLE void start();//TODO: not a SerialEngine functionality
-    Q_INVOKABLE void resetToZero();//TODO: not a SerialEngine functionality
+
+    void sendCommand(const QString &command, QtGrbl::CommandPriority prio = QtGrbl::CommandPriority::Back);
+    void sendCommand(QByteArray command, QtGrbl::CommandPriority prio = QtGrbl::CommandPriority::Back);
 
     QStringList portList() const {
         return m_portList;
@@ -70,35 +67,23 @@ public:
         return m_status;
     }
 
-    QString consoleOutput() const {
-        return m_consoleOutput;
-    }
-    QString filePath() const
-    {
-        return QFileInfo(m_file).absoluteFilePath();
-    }
-
-    void setFilePath(const QString &fileUrl);
 signals:
+    void responseReceived(const QByteArray &response);
+    void commandSent(const QByteArray &command);
+
     void portListChanged();
     void statusChanged();
-    void consoleOutputChanged();
-
-    void filePathChanged();
 
 private:
-    explicit SerialPortEngine(QObject *parent = nullptr);
-    virtual ~SerialPortEngine();
-
     void processQueue();
+    void write(const QByteArray &buffer);
 
     QStringList m_portList;
     Status m_status;
-    QString m_consoleOutput;
 
     std::unique_ptr<QSerialPort> m_port;
-    std::unique_ptr<SerialStateMachine> m_stateMachine;
     QQueue<QByteArray> m_queue;
-    QFile m_file;
     QByteArray m_lastCommand;
 };
+
+}

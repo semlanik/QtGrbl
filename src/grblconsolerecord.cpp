@@ -23,30 +23,4 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "serialengine.h"
-#include "serialstatemachine.h"
-
-#include <QDebug>
-
-class TraceableState : public QState {
-public:
-    TraceableState(QState *parentState) : QState(parentState){}
-protected:
-    void onEntry(QEvent *) override {
-        qDebug() << "onEntry: " << objectName();
-    }
-    void onExit(QEvent *) override {
-        qDebug() << "onExit: " << objectName();
-    }
-};
-
-SerialStateMachine::SerialStateMachine(SerialPortEngine *engine, QObject *parent) : QObject(parent)
-  ,m_engine(engine)
-{
-    TraceableState *state  = new TraceableState(&m_machine);
-    state->setObjectName("Disconnected");
-    m_machine.setInitialState(state);
-    m_machine.start();
-}
-
-SerialStateMachine::~SerialStateMachine() = default;
+#include "grblconsolerecord.h"

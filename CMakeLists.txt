@@ -36,15 +36,20 @@ if(ANDROID)
     )
 else()
     add_executable(qtgrbl
-      main.cpp
-      serial/serialengine.cpp
-      serial/serialstatemachine.cpp
-      qml.qrc
+      src/main.cpp
+      src/grblengine.cpp
+      src/grblconsole.cpp
+      src/grblserial.cpp
+      src/grblstatemachine.cpp
+      src/grblconsolerecord.cpp
+      src/universallistmodel.cpp
+      src/universallistmodelbase.cpp
+      src/qml/qml.qrc
       ${TS_FILES}
     )
 endif()
 
-target_include_directories(qtgrbl PRIVATE serial)
+target_include_directories(qtgrbl PRIVATE src)
 target_compile_definitions(qtgrbl
   PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 target_link_libraries(qtgrbl

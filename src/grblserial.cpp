@@ -22,36 +22,34 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include "serialengine.h"
+
+#include "grblserial.h"
 
 #include <QSerialPortInfo>
 #include <QSerialPort>
-#include <QList>
 #include <QDebug>
 
-//TODO: Move to other place
-#include <QFile>
-#include <QUrl>
-//TODO:end Move to other place
+namespace {
+const int GrblMaxCommandLineSize = 128;
+}
 
-#include "serialstatemachine.h"
+using namespace QtGrbl;
 
-SerialPortEngine::SerialPortEngine(QObject *parent) : QObject(parent)
-  ,m_status(SerialPortEngine::Idle)
-  ,m_stateMachine(std::make_unique<SerialStateMachine>(this))
+GrblSerial::GrblSerial(QObject *parent) : QObject(parent)
+  ,m_status(GrblSerial::Idle)
 {
     updatePortList();
 }
 
 
-SerialPortEngine::~SerialPortEngine()
+GrblSerial::~GrblSerial()
 {
     if (m_port->isOpen()) {
         m_port->close();
     }
 }
 
-void SerialPortEngine::updatePortList()
+void GrblSerial::updatePortList()
 {
     m_portList.clear();
     emit portListChanged();
@@ -63,7 +61,7 @@ void SerialPortEngine::updatePortList()
     emit portListChanged();
 }
 
-void SerialPortEngine::connectPort(int portIndex)
+void GrblSerial::connectPort(int portIndex)
 {
     if (m_port) {
         qCritical() << "Port is already opened" << m_port->portName();
@@ -89,18 +87,17 @@ void SerialPortEngine::connectPort(int portIndex)
             while(m_port->canReadLine()) {
                 QByteArray grblData = m_port->readLine();
                 qDebug() << "Raw data: "  << grblData.toHex();
-                m_consoleOutput.append(QString::fromLatin1(grblData));
-                emit consoleOutputChanged();
-                qDebug() << grblData;
-
+                qDebug() << "String data: " << grblData;
                 if (grblData == "ok\r\n") {
-                    m_status = SerialPortEngine::Idle;
+                    m_status = GrblSerial::Idle;
                     processQueue();
                 } else if (grblData.startsWith("error:")) {
-                    m_status = SerialPortEngine::Error;
+                    m_status = GrblSerial::Error;
                     qCritical() << "Error occured: " << QString::fromLatin1(grblData);
                     qWarning() << "Last command: " << m_lastCommand;
                 }
+
+                emit responseReceived(grblData);
             }
         });
     } else {
@@ -108,14 +105,14 @@ void SerialPortEngine::connectPort(int portIndex)
     }
 }
 
-void SerialPortEngine::sendCommand(const QString &command)
+void GrblSerial::sendCommand(const QString &command, QtGrbl::CommandPriority prio)
 {
     QByteArray buffer = command.trimmed().toLatin1() + "\n";//TODO: add setting to switch carriage
-                                                            //return symbol
-    sendCommand(buffer);
+    //return symbol
+    sendCommand(buffer, prio);
 }
 
-void SerialPortEngine::sendCommand(QByteArray command)
+void GrblSerial::sendCommand(QByteArray command, QtGrbl::CommandPriority prio)
 {
     if (!m_port || !m_port->isOpen()) {
         qCritical() << "Unable to send data. Port is not opened";
@@ -130,84 +127,65 @@ void SerialPortEngine::sendCommand(QByteArray command)
     if (command.endsWith("\r\n") || command.endsWith("\n\r")) {
         command.resize(command.size() - 1);
         command[command.size() - 1] = '\n';//TODO: add setting to switch carriage
-                                           //return symbol
+        //return symbol
     }
 
-    qDebug() << "Send command: " << command;
-    m_queue.push_back(command);
+    qDebug() << "Send command: " << command << "Prio: " << prio;
+    switch (prio) {
+    case QtGrbl::CommandPriority::Immediate:
+        write(command);
+        //No further queue processing.
+        return;
+    case QtGrbl::CommandPriority::Front:
+        m_queue.push_front(command);
+        break;
+    default:
+        m_queue.push_back(command);
+        break;
+    }
+
     processQueue();
 }
 
-void SerialPortEngine::processQueue()
+void GrblSerial::processQueue()
 {
     switch (m_status) {
-    case SerialPortEngine::Idle: {
+    case GrblSerial::Idle:
         if (m_queue.size() > 0) {
             auto buffer = m_queue.takeFirst();
-            if (buffer.size() > 128) {
+            if (buffer.size() > GrblMaxCommandLineSize) {
                 qCritical() << "Invalid command size: " << buffer.size() << "Maximum command size"
-                            << "is 128 bytes";
+                            << "is" << GrblMaxCommandLineSize << "bytes";
                 return;
             }
             qDebug() << "Enqueue next command: " << buffer;
             m_lastCommand = buffer;
-            m_port->write(buffer);
-            m_status = SerialPortEngine::Busy;
+            write(buffer);
+            m_status = GrblSerial::Busy;
         }
-    }
         break;
-    case SerialPortEngine::Error:
+    case GrblSerial::Error:
         qCritical() << "Machine is in error state, user action required";
     default:
         break;
     }
 }
 
-void SerialPortEngine::clearError()
+void GrblSerial::write(const QByteArray &buffer)
+{
+    if (!m_port || !m_port->isOpen()) {
+        qCritical() << "Unable to write data. Port is not opened";
+        return;
+    }
+
+    emit commandSent(buffer);
+    m_port->write(buffer);
+}
+
+void GrblSerial::clearError()
 {
     qWarning() << "Manual error unlock triggered";
-    m_status = SerialPortEngine::Idle;
+    m_status = GrblSerial::Idle;
     processQueue();
 }
 
-void SerialPortEngine::clearOutput()
-{
-    m_consoleOutput.clear();
-    emit consoleOutputChanged();
-}
-
-void SerialPortEngine::setFilePath(const QString &fileUrl)
-{
-    QString filePath = QUrl(fileUrl).toLocalFile();
-    m_file.close();
-    m_file.setFileName("");
-    if (!QFile::exists(filePath)) {
-        qCritical() << "File doesn't exists" << filePath;
-        emit filePathChanged();
-        return;
-    }
-
-    m_file.setFileName(filePath);
-    if (!m_file.open(QFile::ReadOnly)) {
-        qCritical() << "Unable to open file" << filePath;
-        m_file.setFileName("");
-        emit filePathChanged();
-        return;
-    }
-}
-
-void SerialPortEngine::start()
-{
-    if (!m_file.isOpen()) {
-        qCritical() << "File is not opened";
-        return;
-    }
-    while (!m_file.atEnd()) {
-        sendCommand(m_file.readLine());
-    }
-}
-
-void SerialPortEngine::resetToZero()
-{
-    sendCommand(QByteArray("G92 X0 Y0 Z0\n"));
-}

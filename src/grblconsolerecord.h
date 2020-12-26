@@ -22,24 +22,52 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-import QtQuick 2.0
 
-Flickable {
-    id: consoleOutput
-    property alias text: innerText.text
-    contentHeight: innerText.height
-    contentWidth: innerText.width
-    clip: true
-    onTextChanged: {
-         consoleOutput.contentY = consoleOutput.contentHeight - consoleOutput.height
+#pragma once
+
+#include <QObject>
+#include <QDateTime>
+
+namespace QtGrbl {
+
+class GrblConsoleRecord : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(Type type READ type CONSTANT)
+    Q_PROPERTY(QDateTime timestamp READ timestamp CONSTANT)
+    Q_PROPERTY(QString log READ log CONSTANT)
+public:
+    enum Type {
+        Command,
+        Response,
+        Status
+    };
+    Q_ENUM(Type)
+
+    GrblConsoleRecord(Type type, const QDateTime &timestamp, const QString &log) : QObject()
+      ,  m_type(type)
+      , m_timestamp(timestamp)
+      , m_log(log)
+    {
+
     }
 
-    TextEdit {
-        id: innerText
-        width: consoleOutput.width
-        height: innerText.implicitHeight
-        text: SerialEngine.consoleOutput
-        readOnly: true
-        selectByMouse: true
+    Type type() const {
+        return m_type;
     }
+
+    QDateTime timestamp() const {
+        return m_timestamp;
+    }
+
+    QString log() const {
+        return m_log;
+    }
+
+private:
+    Type m_type;
+    QDateTime m_timestamp;
+    QString m_log;
+};
+
 }
