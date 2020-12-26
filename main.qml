@@ -28,9 +28,9 @@ import QtQuick.Window 2.15
 import QtQuick.Controls 2.5
 import QtGrbl 1.0
 import QtQuick.Layouts 1.12
+import QtQuick.Dialogs 1.3
 
 Window {
-    visible: true
     width: 640
     height: 480
     title: qsTr("Hello World")
@@ -42,7 +42,7 @@ Window {
                 model: SerialEngine.portList
             }
             Button {
-                text: SerialEngine.status === SerialEngine.Disconnected ? "Connect" : "Disconnect"
+                text: "Connect" //TODO: Check state machine state here ? "Connect" : "Disconnect"
                 onClicked: {
                     SerialEngine.connectPort(portSelector.currentIndex)
                 }
@@ -51,6 +51,30 @@ Window {
                 text: "Clear"
                 onClicked: {
                     SerialEngine.clearOutput()
+                }
+            }
+            Button {
+                text: "Clear error"
+                onClicked: {
+                    SerialEngine.clearError()
+                }
+            }
+            Button {
+                text: "Select file"
+                onClicked: {
+                    fileSelection.open()
+                }
+            }
+            Button {
+                text: "Start"
+                onClicked: {
+                    SerialEngine.start();//TODO: not a SerialEngine functionality
+                }
+            }
+            Button {
+                text: "Reset to 0"
+                onClicked: {
+                    SerialEngine.resetToZero();//TODO: not a SerialEngine functionality
                 }
             }
         }
@@ -66,8 +90,22 @@ Window {
         }
     }
 
+    FileDialog {
+        id: fileSelection
+        selectMultiple: false
+        selectFolder: false
+        onAccepted: {
+            SerialEngine.filePath = fileSelection.fileUrl;//TODO: not a SerialEngine functionality
+        }
+    }
+
     TextField {
         id: consoleInput
+        focus: true
+        onActiveFocusChanged: {
+            forceActiveFocus()
+        }
+
         anchors {
             left: parent.left
             right: parent.right
@@ -77,5 +115,8 @@ Window {
             SerialEngine.sendCommand(consoleInput.text)
             consoleInput.text = "";
         }
+    }
+    Component.onCompleted: {
+        showMaximized()
     }
 }

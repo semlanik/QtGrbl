@@ -22,24 +22,38 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-import QtQuick 2.0
 
-Flickable {
-    id: consoleOutput
-    property alias text: innerText.text
-    contentHeight: innerText.height
-    contentWidth: innerText.width
-    clip: true
-    onTextChanged: {
-         consoleOutput.contentY = consoleOutput.contentHeight - consoleOutput.height
+#include <QObject>
+
+#include <QState>
+#include <QStateMachine>
+#include <QPointer>
+
+class SerialPortEngine;
+
+class SerialStateMachine : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(State state READ state NOTIFY stateChanged)
+public:
+    enum State {
+        Disconnected,
+        Connected,
+        Progress,
+        Paused
+    };
+    explicit SerialStateMachine(SerialPortEngine *engine, QObject *parent = nullptr);
+    virtual ~SerialStateMachine();
+    State state() const
+    {
+        return m_state;
     }
 
-    TextEdit {
-        id: innerText
-        width: consoleOutput.width
-        height: innerText.implicitHeight
-        text: SerialEngine.consoleOutput
-        readOnly: true
-        selectByMouse: true
-    }
-}
+signals:
+    void stateChanged(State state);
+
+private:
+    QStateMachine m_machine;
+    QPointer<SerialPortEngine> m_engine;
+    State m_state;
+};

@@ -38,6 +38,7 @@ else()
     add_executable(qtgrbl
       main.cpp
       serial/serialengine.cpp
+      serial/serialstatemachine.cpp
       qml.qrc
       ${TS_FILES}
     )

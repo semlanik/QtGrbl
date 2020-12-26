@@ -22,24 +22,31 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-import QtQuick 2.0
 
-Flickable {
-    id: consoleOutput
-    property alias text: innerText.text
-    contentHeight: innerText.height
-    contentWidth: innerText.width
-    clip: true
-    onTextChanged: {
-         consoleOutput.contentY = consoleOutput.contentHeight - consoleOutput.height
-    }
+#include "serialengine.h"
+#include "serialstatemachine.h"
 
-    TextEdit {
-        id: innerText
-        width: consoleOutput.width
-        height: innerText.implicitHeight
-        text: SerialEngine.consoleOutput
-        readOnly: true
-        selectByMouse: true
+#include <QDebug>
+
+class TraceableState : public QState {
+public:
+    TraceableState(QState *parentState) : QState(parentState){}
+protected:
+    void onEntry(QEvent *) override {
+        qDebug() << "onEntry: " << objectName();
     }
+    void onExit(QEvent *) override {
+        qDebug() << "onExit: " << objectName();
+    }
+};
+
+SerialStateMachine::SerialStateMachine(SerialPortEngine *engine, QObject *parent) : QObject(parent)
+  ,m_engine(engine)
+{
+    TraceableState *state  = new TraceableState(&m_machine);
+    state->setObjectName("Disconnected");
+    m_machine.setInitialState(state);
+    m_machine.start();
 }
+
+SerialStateMachine::~SerialStateMachine() = default;

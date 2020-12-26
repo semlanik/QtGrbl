@@ -27,8 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <memory>
+#include <QQueue>
+#include <QFile>
+#include <QFileInfo>
 
 class QSerialPort;
+class SerialStateMachine;
 
 class SerialPortEngine : public QObject
 {
@@ -36,13 +40,13 @@ class SerialPortEngine : public QObject
     Q_PROPERTY(QStringList portList READ portList NOTIFY portListChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
     Q_PROPERTY(QString consoleOutput READ consoleOutput NOTIFY consoleOutputChanged)
+    Q_PROPERTY(QString filePath READ filePath WRITE setFilePath NOTIFY filePathChanged)//TODO: not a SerialEngine functionality
     Q_ENUMS(Status)
 public:
     enum Status {
-        Disconnected,
-        Connected,
-        Progress,
-        Paused
+        Idle,
+        Busy,
+        Error
     };
 
     static SerialPortEngine *instance() {
@@ -52,7 +56,11 @@ public:
     Q_INVOKABLE void updatePortList();
     Q_INVOKABLE void connectPort(int portIndex);
     Q_INVOKABLE void sendCommand(const QString &command);
+    Q_INVOKABLE void sendCommand(QByteArray command);
     Q_INVOKABLE void clearOutput();
+    Q_INVOKABLE void clearError();
+    Q_INVOKABLE void start();//TODO: not a SerialEngine functionality
+    Q_INVOKABLE void resetToZero();//TODO: not a SerialEngine functionality
 
     QStringList portList() const {
         return m_portList;
@@ -62,21 +70,35 @@ public:
         return m_status;
     }
 
-    QString consoleOutput() const
-    {
+    QString consoleOutput() const {
         return m_consoleOutput;
     }
+    QString filePath() const
+    {
+        return QFileInfo(m_file).absoluteFilePath();
+    }
+
+    void setFilePath(const QString &fileUrl);
 signals:
     void portListChanged();
     void statusChanged();
     void consoleOutputChanged();
 
+    void filePathChanged();
+
 private:
     explicit SerialPortEngine(QObject *parent = nullptr);
     virtual ~SerialPortEngine();
 
+    void processQueue();
+
     QStringList m_portList;
     Status m_status;
-    std::unique_ptr<QSerialPort> m_port;
     QString m_consoleOutput;
+
+    std::unique_ptr<QSerialPort> m_port;
+    std::unique_ptr<SerialStateMachine> m_stateMachine;
+    QQueue<QByteArray> m_queue;
+    QFile m_file;
+    QByteArray m_lastCommand;
 };
