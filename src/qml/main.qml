@@ -43,9 +43,13 @@ Window {
                 model: GrblSerial.portList
             }
             Button {
-                text: "Connect" //TODO: Check state machine state here ? "Connect" : "Disconnect"
+                text: GrblSerial.isConnected ? "Disconnect" : "Connect" //TODO: Check state machine state here
                 onClicked: {
-                    GrblSerial.connectPort(portSelector.currentIndex)
+                    if (!GrblSerial.isConnected) {
+                        GrblSerial.connectPort(portSelector.currentIndex)
+                    } else {
+                        GrblSerial.disconnectPort()
+                    }
                 }
             }
             Button {

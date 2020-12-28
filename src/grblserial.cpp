@@ -29,14 +29,10 @@
 #include <QSerialPort>
 #include <QDebug>
 
-namespace {
-const int GrblMaxCommandLineSize = 128;
-}
-
 using namespace QtGrbl;
 
 GrblSerial::GrblSerial(QObject *parent) : QObject(parent)
-  ,m_status(GrblSerial::Idle)
+  , m_status(GrblSerial::Idle)
 {
     updatePortList();
 }
@@ -44,9 +40,7 @@ GrblSerial::GrblSerial(QObject *parent) : QObject(parent)
 
 GrblSerial::~GrblSerial()
 {
-    if (m_port->isOpen()) {
-        m_port->close();
-    }
+    disconnectPort();
 }
 
 void GrblSerial::updatePortList()
@@ -82,27 +76,62 @@ void GrblSerial::connectPort(int portIndex)
     m_port->setParity(QSerialPort::NoParity);
     m_port->setStopBits(QSerialPort::OneStop);
 
-    if (m_port->open(QSerialPort::ReadWrite)) {
-        connect(m_port.get(), &QSerialPort::readyRead, this, [this](){
-            while(m_port->canReadLine()) {
-                QByteArray grblData = m_port->readLine();
-                qDebug() << "Raw data: "  << grblData.toHex();
-                qDebug() << "String data: " << grblData;
-                if (grblData == "ok\r\n") {
-                    m_status = GrblSerial::Idle;
-                    processQueue();
-                } else if (grblData.startsWith("error:")) {
-                    m_status = GrblSerial::Error;
-                    qCritical() << "Error occured: " << QString::fromLatin1(grblData);
-                    qWarning() << "Last command: " << m_lastCommand;
-                }
-
-                emit responseReceived(grblData);
-            }
-        });
-    } else {
+    if (!m_port->open(QSerialPort::ReadWrite)) {
         qCritical() << "Unable to open" << m_port->portName() << m_port->errorString();
+        m_port.reset();
+        return;
     }
+
+    emit isConnectedChanged();
+
+    connect(m_port.get(), &QSerialPort::readyRead, this, [this]() {
+        while (m_port->canReadLine()) {
+            QByteArray grblData = m_port->readLine();
+            qDebug() << "Raw data: "  << grblData.toHex();
+            qDebug() << "String data: " << grblData;
+
+            auto lastMessage = m_sent.take();
+
+            emit responseReceived(grblData);
+            if (grblData == "ok\r\n") {
+                m_status = GrblSerial::Idle;
+                processQueue();
+            } else if (grblData.startsWith("error:")) {
+                m_status = GrblSerial::Error;
+                qCritical() << "Error occured: " << QString::fromLatin1(grblData);
+                qWarning() << "Last command: " << lastMessage;
+            }
+        }
+    });
+    connect(m_port.get(), &QSerialPort::errorOccurred, this, &GrblSerial::onError);
+}
+
+void GrblSerial::disconnectPort()
+{
+    if (m_port) {
+        if (m_port->isOpen()) {
+            m_port->close();
+        }
+        m_port.reset();
+        emit isConnectedChanged();
+    }
+    m_sent.clear();
+}
+
+bool GrblSerial::isConnected() const
+{
+    return m_port && m_port->isOpen();
+}
+
+void GrblSerial::onError(QSerialPort::SerialPortError error)
+{
+    if (error == QSerialPort::NoError) {
+        qCritical() << "\"NoError\" error occured, it should n't happen";
+        return;
+    }
+
+    qCritical() << "Error " << error << " occured on serial port. Closing it.";
+    disconnectPort();
 }
 
 void GrblSerial::sendCommand(const QString &command, QtGrbl::CommandPriority prio)
@@ -133,9 +162,15 @@ void GrblSerial::sendCommand(QByteArray command, QtGrbl::CommandPriority prio)
     qDebug() << "Send command: " << command << "Prio: " << prio;
     switch (prio) {
     case QtGrbl::CommandPriority::Immediate:
-        write(command);
-        //No further queue processing.
-        return;
+        if (!m_sent.test(command)) {
+            // If last command size > 128 bytes, we cannot send Immediate command, because it would
+            // cause buffer overflow in grbl
+            m_queue.push_front(command);
+        } else {
+            write(command);
+            // No further queue processing.
+            return;
+        }
     case QtGrbl::CommandPriority::Front:
         m_queue.push_front(command);
         break;
@@ -158,8 +193,6 @@ void GrblSerial::processQueue()
                             << "is" << GrblMaxCommandLineSize << "bytes";
                 return;
             }
-            qDebug() << "Enqueue next command: " << buffer;
-            m_lastCommand = buffer;
             write(buffer);
             m_status = GrblSerial::Busy;
         }
@@ -178,8 +211,13 @@ void GrblSerial::write(const QByteArray &buffer)
         return;
     }
 
+    if (m_port->write(buffer) != buffer.size()) {
+        qCritical() << "Unable to write command buffer";
+        return;
+    }
+
     emit commandSent(buffer);
-    m_port->write(buffer);
+    m_sent.push(buffer);
 }
 
 void GrblSerial::clearError()

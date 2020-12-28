@@ -98,6 +98,9 @@ void GrblEngine::attach(const std::weak_ptr<GrblSerial> &serialEngine)
     }
 
     m_serialEngine = serialEngine;
+    auto engine = m_serialEngine.lock();
+
+    connect(this, &GrblEngine::sendCommand, engine.get(), qOverload<QByteArray, QtGrbl::CommandPriority>(&GrblSerial::sendCommand));
 }
 
 void GrblEngine::hold()
@@ -127,8 +130,13 @@ void GrblEngine::returnToZero()
         qCritical() << "Unable to resume, serial engine is null";
         return;
     }
-    engine->sendCommand(QByteArray("G90\n"), CommandPriority::Immediate); //TODO: emit send signal instead
-    engine->sendCommand(QByteArray("G0 Z5\n"), CommandPriority::Immediate); //TODO: emit send signal instead
-    engine->sendCommand(QByteArray("G0 Y0 X0\n"), CommandPriority::Immediate); //TODO: emit send signal instead
-    engine->sendCommand(QByteArray("G0 Z0\n"), CommandPriority::Immediate); //TODO: emit send signal instead
+    emit sendCommand(QByteArray("G90\n"), CommandPriority::Back);
+    emit sendCommand(QByteArray("G0 Z5\n"), CommandPriority::Back);
+    emit sendCommand(QByteArray("G0 Y0 X0\n"), CommandPriority::Back);
+    emit sendCommand(QByteArray("G0 Z0\n"), CommandPriority::Back);
+}
+
+void GrblEngine::requestParserState()
+{
+   emit sendCommand(QByteArray("$G\n"), CommandPriority::Immediate);
 }

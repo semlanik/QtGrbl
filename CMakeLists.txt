@@ -44,6 +44,7 @@ else()
       src/grblconsolerecord.cpp
       src/universallistmodel.cpp
       src/universallistmodelbase.cpp
+      src/grblremotemessagebuffer.cpp
       src/qml/qml.qrc
       ${TS_FILES}
     )

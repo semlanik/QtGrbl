@@ -27,12 +27,12 @@
 
 #include <QObject>
 #include <QStringList>
+#include <QSerialPort>
 #include <memory>
 #include <QQueue>
 
 #include "qtgrblcommon.h"
-
-class QSerialPort;
+#include "grblremotemessagebuffer.h"
 
 namespace QtGrbl {
 
@@ -41,6 +41,7 @@ class GrblSerial : public QObject
     Q_OBJECT
     Q_PROPERTY(QStringList portList READ portList NOTIFY portListChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
+    Q_PROPERTY(bool isConnected READ isConnected NOTIFY isConnectedChanged)
 public:
     enum Status {
         Idle, //! No command is sent, no response awaiting
@@ -54,6 +55,7 @@ public:
 
     Q_INVOKABLE void updatePortList();
     Q_INVOKABLE void connectPort(int portIndex);
+    Q_INVOKABLE void disconnectPort();
     Q_INVOKABLE void clearError();
 
     void sendCommand(const QString &command, QtGrbl::CommandPriority prio = QtGrbl::CommandPriority::Back);
@@ -67,23 +69,27 @@ public:
         return m_status;
     }
 
+    bool isConnected() const;
+
 signals:
     void responseReceived(const QByteArray &response);
     void commandSent(const QByteArray &command);
 
     void portListChanged();
     void statusChanged();
+    void isConnectedChanged();
 
 private:
     void processQueue();
     void write(const QByteArray &buffer);
+    void onError(QSerialPort::SerialPortError error);
 
     QStringList m_portList;
-    Status m_status;
+    Status m_status; //! Sending status
 
     std::unique_ptr<QSerialPort> m_port;
-    QQueue<QByteArray> m_queue;
-    QByteArray m_lastCommand;
+    QQueue<QByteArray> m_queue; //! Pending messages queue
+    GrblRemoteMessageBuffer m_sent; //! Messages are sent but, not processed
 };
 
 }

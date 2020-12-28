@@ -25,23 +25,55 @@
 
 #pragma once
 
-#include <QQmlEngine>
+#include <QByteArray>
+
+#include "qtgrblcommon.h"
 
 namespace QtGrbl {
-    enum CommandPriority {
-        Back,     //! Push to end of queue(default)
-        Front,    //! Push to front of queue
-        Immediate //! Immediate send command without avaiting of previous acknowledge
-    };
 
-    template<typename T>
-    void qmlRegisterGrblSingleton(const char *typeName, std::shared_ptr<T> pointer) {
-        qmlRegisterSingletonType<T>("QtGrbl", 1, 0, typeName, [pointer](QQmlEngine *engine, QJSEngine *){
-            auto instance = pointer.get();
-            engine->setObjectOwnership(instance, QQmlEngine::CppOwnership);
-            return instance;
-        });
+/*!
+ * \brief The GrblRemoteMessageBuffer class is simple FIFO queue that controls remote buffer
+ * overflow
+ */
+class GrblRemoteMessageBuffer
+{
+public:
+    GrblRemoteMessageBuffer() = default;
+    virtual ~GrblRemoteMessageBuffer() = default;
+
+    bool test(const QByteArray &command) {
+        return (m_buffer.size() + command.size()) < GrblMaxCommandLineSize;
     }
 
-    const unsigned int GrblMaxCommandLineSize = 128;
+    void push(const QByteArray &buffer) {
+        m_buffer.append(buffer);
+    }
+
+    QByteArray take() {
+        int firstMessageLen = m_buffer.indexOf('\n') + 1;
+        if (firstMessageLen > 0) {
+            auto lastMessage = m_buffer.mid(0, firstMessageLen);
+            if (firstMessageLen < m_buffer.size()) {
+                m_buffer = m_buffer.mid(firstMessageLen);
+            } else {
+                clear();
+            }
+            return lastMessage;
+        }
+        clear();
+        return QByteArray();
+    }
+
+    int size() const {
+        return m_buffer.size();
+    }
+
+    void clear() {
+        m_buffer.clear();
+    }
+
+private:
+    QByteArray m_buffer;
+};
+
 }

@@ -31,6 +31,8 @@
 #include <QFileInfo>
 #include <QPointer>
 
+#include "qtgrblcommon.h"
+
 namespace QtGrbl {
 
 class GrblSerial;
@@ -59,7 +61,10 @@ signals:
     void consoleOutputChanged();
     void filePathChanged();
 
+    void sendCommand(const QByteArray &command, QtGrbl::CommandPriority prio);
 private:
+    void requestParserState();
+
     QFile m_file;
     std::weak_ptr<GrblSerial> m_serialEngine;
 };

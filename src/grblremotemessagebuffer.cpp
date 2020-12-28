@@ -23,25 +23,4 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-
-#include <QQmlEngine>
-
-namespace QtGrbl {
-    enum CommandPriority {
-        Back,     //! Push to end of queue(default)
-        Front,    //! Push to front of queue
-        Immediate //! Immediate send command without avaiting of previous acknowledge
-    };
-
-    template<typename T>
-    void qmlRegisterGrblSingleton(const char *typeName, std::shared_ptr<T> pointer) {
-        qmlRegisterSingletonType<T>("QtGrbl", 1, 0, typeName, [pointer](QQmlEngine *engine, QJSEngine *){
-            auto instance = pointer.get();
-            engine->setObjectOwnership(instance, QQmlEngine::CppOwnership);
-            return instance;
-        });
-    }
-
-    const unsigned int GrblMaxCommandLineSize = 128;
-}
+#include "grblremotemessagebuffer.h"
