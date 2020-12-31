@@ -26,6 +26,7 @@
 #include "grblengine.h"
 
 #include "grblserial.h"
+#include "grblgcodestate.h"
 
 #include <QFile>
 #include <QUrl>
@@ -34,6 +35,7 @@
 using namespace QtGrbl;
 
 GrblEngine::GrblEngine(QObject *parent) : QObject(parent)
+  , m_gcodeState(std::make_unique<GrblGCodeState>())
 {
 }
 
@@ -76,7 +78,7 @@ void GrblEngine::start()
     }
 
     while (!m_file.atEnd()) {
-        engine->sendCommand(m_file.readLine()); //TODO: emit send signal instead
+        emit sendCommand(m_file.readLine(), CommandPriority::Back);
     }
 }
 
@@ -87,7 +89,7 @@ void GrblEngine::resetToZero()
         qCritical() << "Unable to reset to zero, serial engine is null";
         return;
     }
-    engine->sendCommand(QByteArray("G92 X0 Y0 Z0\n")); //TODO: emit send signal instead
+    emit sendCommand(QByteArray("G92 X0 Y0 Z0\n"), CommandPriority::Front);
 }
 
 void GrblEngine::attach(const std::weak_ptr<GrblSerial> &serialEngine)
@@ -101,6 +103,11 @@ void GrblEngine::attach(const std::weak_ptr<GrblSerial> &serialEngine)
     auto engine = m_serialEngine.lock();
 
     connect(this, &GrblEngine::sendCommand, engine.get(), qOverload<QByteArray, QtGrbl::CommandPriority>(&GrblSerial::sendCommand));
+    connect(engine.get(), &GrblSerial::responseReceived, this, [this](const QByteArray &response) {
+        if (response.startsWith(GCodeStatePrefix)) {
+            m_gcodeState->fromRawData(response);
+        }
+    });
 }
 
 void GrblEngine::hold()
@@ -110,7 +117,7 @@ void GrblEngine::hold()
         qCritical() << "Unable to hold, serial engine is null";
         return;
     }
-    engine->sendCommand(QByteArray("!\n"), CommandPriority::Immediate); //TODO: emit send signal instead
+    emit sendCommand(QByteArray("!\n"), CommandPriority::Immediate);
 }
 
 void GrblEngine::resume()
@@ -120,7 +127,7 @@ void GrblEngine::resume()
         qCritical() << "Unable to resume, serial engine is null";
         return;
     }
-    engine->sendCommand(QByteArray("~\n"), CommandPriority::Immediate); //TODO: emit send signal instead
+    emit sendCommand(QByteArray("~\n"), CommandPriority::Immediate);
 }
 
 void GrblEngine::returnToZero()

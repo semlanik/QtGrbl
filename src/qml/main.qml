@@ -28,6 +28,7 @@ import QtQuick.Window 2.15
 import QtQuick.Controls 2.5
 import QtQuick.Layouts 1.12
 import QtQuick.Dialogs 1.3
+import QtQml.Models 2.1
 
 import QtGrbl 1.0
 
@@ -35,12 +36,83 @@ Window {
     width: 640
     height: 480
     title: qsTr("QtGrbl")
+
+
+
+    SideToolbar {
+        id: leftToolbar
+        position: "left"
+        content: ObjectModel {
+            GCodeStateView {}
+        }
+    }
+
+    SideToolbar {
+        id: rightToolbar
+        position: "right"
+        content: ObjectModel {
+            ConsoleOutput {
+                model: GrblConsole
+                width: parent.width
+                height: 500
+            }
+        }
+    }
+
+    FileDialog {
+        id: fileSelection
+        selectMultiple: false
+        selectFolder: false
+        onAccepted: {
+            GrblEngine.filePath = fileSelection.fileUrl;//TODO: not a SerialEngine functionality
+        }
+    }
+
+    TextField {
+        id: consoleInput
+        focus: true
+        onActiveFocusChanged: {
+            forceActiveFocus()
+        }
+
+        width: parent.width/4
+        anchors {
+            horizontalCenter: parent.horizontalCenter
+            bottom: parent.bottom
+        }
+
+        Keys.onUpPressed: {
+            consoleInput.text = GrblConsole.moveHistoryUp()
+        }
+
+        Keys.onDownPressed: {
+            consoleInput.text = GrblConsole.moveHistoryDown()
+        }
+
+        onTextEdited: {
+            GrblConsole.recentInput = text;
+        }
+
+        onAccepted: {
+            GrblConsole.sendCommand(consoleInput.text)
+            consoleInput.text = "";
+        }
+    }
+
     ToolBar {
         id: toolBar
+        anchors.left: leftToolbar.right
+        anchors.right: rightToolbar.left
         Row {
             ComboBox {
                 id: portSelector
                 model: GrblSerial.portList
+            }
+            Button {
+                text: "Update"
+                onClicked: {
+                    GrblSerial.updatePortList()
+                }
             }
             Button {
                 text: GrblSerial.isConnected ? "Disconnect" : "Connect" //TODO: Check state machine state here
@@ -88,43 +160,6 @@ Window {
                     GrblEngine.returnToZero();//TODO: not a SerialEngine functionality
                 }
             }
-        }
-    }
-
-    ConsoleOutput {
-        model: GrblConsole
-        anchors {
-            left: parent.left
-            right: parent.right
-            top: toolBar.bottom
-            bottom: consoleInput.top
-        }
-    }
-
-    FileDialog {
-        id: fileSelection
-        selectMultiple: false
-        selectFolder: false
-        onAccepted: {
-            GrblEngine.filePath = fileSelection.fileUrl;//TODO: not a SerialEngine functionality
-        }
-    }
-
-    TextField {
-        id: consoleInput
-        focus: true
-        onActiveFocusChanged: {
-            forceActiveFocus()
-        }
-
-        anchors {
-            left: parent.left
-            right: parent.right
-            bottom: parent.bottom
-        }
-        onAccepted: {
-            GrblConsole.sendCommand(consoleInput.text)
-            consoleInput.text = "";
         }
     }
 

@@ -30,6 +30,7 @@
 using namespace QtGrbl;
 
 GrblConsole::GrblConsole(QObject *parent) : UniversalListModel({}, parent)
+  , m_inputHistoryPointer(m_inputHistory.end())
 {
 }
 

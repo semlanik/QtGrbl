@@ -2,5 +2,7 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>ConsoleOutput.qml</file>
+        <file>SideToolbar.qml</file>
+        <file>GCodeStateView.qml</file>
     </qresource>
 </RCC>

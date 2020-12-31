@@ -28,6 +28,7 @@
 #include "grblengine.h"
 #include "grblserial.h"
 #include "grblconsole.h"
+#include "grblgcodestate.h"
 
 #include <memory>
 
@@ -55,6 +56,7 @@ int main(int argc, char *argv[])
     QtGrbl::qmlRegisterGrblSingleton("GrblConsole", console);
 
     qmlRegisterUncreatableType<QtGrbl::GrblConsoleRecord>("QtGrbl", 1, 0, "GrblConsoleRecord", "Uncreatable");
+    qmlRegisterUncreatableType<QtGrbl::GrblGCodeState>("QtGrbl", 1, 0, "GrblGCodeState", "Uncreatable");
 
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/main.qml"));

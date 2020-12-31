@@ -27,6 +27,8 @@
 
 #include <QFile>
 
+#include <list>
+
 #include "universallistmodel.h"
 #include "grblconsolerecord.h"
 #include "qtgrblcommon.h"
@@ -37,7 +39,7 @@ class GrblConsole : public UniversalListModel<GrblConsoleRecord>
 {
     Q_OBJECT
     Q_PROPERTY(bool saveToFile READ saveToFile WRITE setSaveToFile NOTIFY saveToFileChanged)
-
+    Q_PROPERTY(QString recentInput READ recentInput WRITE setUserInput NOTIFY recentInputChanged)
 public:
     GrblConsole(QObject *parent = nullptr);
     virtual ~GrblConsole() = default;
@@ -45,6 +47,14 @@ public:
     Q_INVOKABLE void save(const QString &filePath);
     Q_INVOKABLE void clear();
     Q_INVOKABLE void sendCommand(const QString &command) {
+        if (command.isEmpty()) {
+            return;
+        }
+
+        m_recentInput.clear();
+        m_inputHistory.push_back(command);
+        m_inputHistoryPointer = m_inputHistory.end();
+
         //For user command default priority is Front
         sendCommand(command, QtGrbl::CommandPriority::Front);
     }
@@ -66,14 +76,57 @@ public:
         emit saveToFileChanged();
     }
 
+    Q_INVOKABLE QString moveHistoryUp() {
+        if (m_inputHistory.empty()) {
+            return m_recentInput;
+        }
+
+        if (m_inputHistoryPointer != m_inputHistory.begin()) {
+            return *--m_inputHistoryPointer;
+        }
+        return *m_inputHistoryPointer;
+
+    }
+
+    Q_INVOKABLE QString moveHistoryDown() {
+        if (m_inputHistory.empty() || m_inputHistoryPointer == m_inputHistory.end()) {
+            return m_recentInput;
+        }
+
+        if (m_inputHistoryPointer != --m_inputHistory.end()) {
+            return *++m_inputHistoryPointer;
+        }
+        m_inputHistoryPointer++;
+        return m_recentInput;
+    }
+
+    QString recentInput() const
+    {
+        return m_recentInput;
+    }
+
+public slots:
+    void setUserInput(const QString &recentInput) {
+        if (m_recentInput == recentInput)
+            return;
+
+        m_recentInput = recentInput;
+        emit recentInputChanged(m_recentInput);
+    }
+
 signals:
     //! Do not use this method directly
     void sendCommand(const QString &command, QtGrbl::CommandPriority prio);
     void saveToFileChanged();
 
+    void recentInputChanged(QString recentInput);
+
 private:
     QFile m_logFile;
     bool m_saveToFile;
+    std::list<QString> m_inputHistory;
+    std::list<QString>::const_iterator m_inputHistoryPointer;
+    QString m_recentInput;
 };
 
 }

@@ -44,4 +44,9 @@ namespace QtGrbl {
     }
 
     const unsigned int GrblMaxCommandLineSize = 128;
+
+    constexpr const char *GCodeStatePrefix = "[GC:";
+    constexpr const char *GCodeStatePostfix = "]";
+    constexpr int GCodeStatePrefixLen = strlen(GCodeStatePrefix);
+    constexpr int GCodeStatePostfixLen = strlen(GCodeStatePostfix);
 }

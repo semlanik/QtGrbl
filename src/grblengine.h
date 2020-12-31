@@ -36,11 +36,13 @@
 namespace QtGrbl {
 
 class GrblSerial;
+class GrblGCodeState;
 
 class GrblEngine : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString filePath READ filePath WRITE setFilePath NOTIFY filePathChanged)
+    Q_PROPERTY(QtGrbl::GrblGCodeState *gcodeState READ gcodeState CONSTANT)
 public:
     explicit GrblEngine(QObject *parent = nullptr);
     virtual ~GrblEngine();
@@ -56,17 +58,25 @@ public:
         return QFileInfo(m_file).absoluteFilePath();
     }
 
+    GrblGCodeState *gcodeState() const {
+        return m_gcodeState.get();
+    }
+
     void setFilePath(const QString &fileUrl);
+
 signals:
     void consoleOutputChanged();
     void filePathChanged();
 
     void sendCommand(const QByteArray &command, QtGrbl::CommandPriority prio);
+    void gcodeStateChanged();
+
 private:
     void requestParserState();
 
     QFile m_file;
     std::weak_ptr<GrblSerial> m_serialEngine;
+    std::unique_ptr<GrblGCodeState> m_gcodeState;
 };
 
 }
