@@ -22,42 +22,24 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+import QtQuick 2.0
+import QtQml.StateMachine 1.0 as DSM
 
-#include <QObject>
+DSM.State {
+    id: root
+    property string name: ""
+    property DSM.StateMachine stateMachine: null
+    onEntered: {
+        if (root.name == "") {
+            console.error("GrblStateMachine: State doesn't have name assigned.");
+            //TODO: Return to previous state here
+            return;
+        }
 
-#include <QState>
-#include <QStateMachine>
-#include <QPointer>
-
-namespace QtGrbl {
-
-class GrblSerial;
-
-class GrblStateMachine : public QObject
-{
-    Q_OBJECT
-    Q_PROPERTY(State state READ state NOTIFY stateChanged)
-public:
-    enum State {
-        Disconnected,
-        Connected,
-        Progress,
-        Paused
-    };
-    explicit GrblStateMachine(GrblSerial *engine, QObject *parent = nullptr);
-    virtual ~GrblStateMachine();
-    State state() const
-    {
-        return m_state;
+        stateMachine.currentState = root.name
+        console.log("GrblStateMachine: Entered: " + root.name)
     }
-
-signals:
-    void stateChanged(State state);
-
-private:
-    QStateMachine m_machine;
-    QPointer<GrblSerial> m_engine;
-    State m_state;
-};
-
+    onExited: {
+        console.log("GrblStateMachine: Exited: " + root.name)
+    }
 }

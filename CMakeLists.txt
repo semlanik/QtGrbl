@@ -40,7 +40,6 @@ else()
       src/grblengine.cpp
       src/grblconsole.cpp
       src/grblserial.cpp
-      src/grblstatemachine.cpp
       src/grblconsolerecord.cpp
       src/universallistmodel.cpp
       src/universallistmodelbase.cpp

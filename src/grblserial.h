@@ -40,6 +40,7 @@ class GrblSerial : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QStringList portList READ portList NOTIFY portListChanged)
+    Q_PROPERTY(int selectedPort READ selectedPort WRITE setSelectedPort NOTIFY selectedPortChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
     Q_PROPERTY(bool isConnected READ isConnected NOTIFY isConnectedChanged)
 public:
@@ -54,6 +55,7 @@ public:
     virtual ~GrblSerial();
 
     Q_INVOKABLE void updatePortList();
+    Q_INVOKABLE void connectPort();
     Q_INVOKABLE void connectPort(int portIndex);
     Q_INVOKABLE void disconnectPort();
     Q_INVOKABLE void clearError();
@@ -71,6 +73,19 @@ public:
 
     bool isConnected() const;
 
+    int selectedPort() const {
+        return m_selectedPort;
+    }
+
+public slots:
+    void setSelectedPort(int selectedPort) {
+        if (m_selectedPort == selectedPort)
+            return;
+
+        m_selectedPort = selectedPort;
+        emit selectedPortChanged(m_selectedPort);
+    }
+
 signals:
     void responseReceived(const QByteArray &response);
     void commandSent(const QByteArray &command);
@@ -78,6 +93,8 @@ signals:
     void portListChanged();
     void statusChanged();
     void isConnectedChanged();
+
+    void selectedPortChanged(int selectedPort);
 
 private:
     void processQueue();
@@ -90,6 +107,7 @@ private:
     std::unique_ptr<QSerialPort> m_port;
     QQueue<QByteArray> m_queue; //! Pending messages queue
     GrblRemoteMessageBuffer m_sent; //! Messages are sent but, not processed
+    int m_selectedPort;
 };
 
 }

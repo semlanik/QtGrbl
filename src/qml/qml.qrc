@@ -4,5 +4,7 @@
         <file>ConsoleOutput.qml</file>
         <file>SideToolbar.qml</file>
         <file>GCodeStateView.qml</file>
+        <file>GrblStateMachine/GrblStateMachine.qml</file>
+        <file>GrblStateMachine/TraceableState.qml</file>
     </qresource>
 </RCC>

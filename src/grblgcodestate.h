@@ -181,6 +181,11 @@ public:
         return !m_raw.isEmpty();
     }
 
+    void reset() {
+        m_raw.clear();
+        emit isValidChanged();
+    }
+
 public slots:
     void setToolNumber(int toolNumber) {
         if (m_toolNumber == toolNumber)

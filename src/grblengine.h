@@ -53,6 +53,7 @@ public:
     Q_INVOKABLE void resetToZero();
     Q_INVOKABLE void hold();
     Q_INVOKABLE void resume();
+    Q_INVOKABLE void updateGCodeState();
 
     QString filePath() const {
         return QFileInfo(m_file).absoluteFilePath();
@@ -72,8 +73,6 @@ signals:
     void gcodeStateChanged();
 
 private:
-    void requestParserState();
-
     QFile m_file;
     std::weak_ptr<GrblSerial> m_serialEngine;
     std::unique_ptr<GrblGCodeState> m_gcodeState;

@@ -32,12 +32,12 @@ import QtQml.Models 2.1
 
 import QtGrbl 1.0
 
+import "GrblStateMachine"
+
 Window {
     width: 640
     height: 480
     title: qsTr("QtGrbl")
-
-
 
     SideToolbar {
         id: leftToolbar
@@ -107,21 +107,22 @@ Window {
             ComboBox {
                 id: portSelector
                 model: GrblSerial.portList
+                enabled: stateMachine.currentState === "disconnected"
+                onCurrentIndexChanged: {
+                    GrblSerial.selectedPort = portSelector.currentIndex
+                }
             }
             Button {
                 text: "Update"
+                enabled: stateMachine.currentState === "disconnected"
                 onClicked: {
                     GrblSerial.updatePortList()
                 }
             }
             Button {
-                text: GrblSerial.isConnected ? "Disconnect" : "Connect" //TODO: Check state machine state here
+                text: stateMachine.currentState === "disconnected" ? "Connect" : "Disconnect"
                 onClicked: {
-                    if (!GrblSerial.isConnected) {
-                        GrblSerial.connectPort(portSelector.currentIndex)
-                    } else {
-                        GrblSerial.disconnectPort()
-                    }
+                    stateMachine.toggleConnect()
                 }
             }
             Button {
@@ -145,22 +146,26 @@ Window {
             Button {
                 text: "Start"
                 onClicked: {
-                    GrblEngine.start();//TODO: not a SerialEngine functionality
+                    GrblEngine.start();
                 }
             }
             Button {
                 text: "Reset to 0"
                 onClicked: {
-                    GrblEngine.resetToZero();//TODO: not a SerialEngine functionality
+                    GrblEngine.resetToZero();
                 }
             }
             Button {
                 text: "Return to 0"
                 onClicked: {
-                    GrblEngine.returnToZero();//TODO: not a SerialEngine functionality
+                    GrblEngine.returnToZero();
                 }
             }
         }
+    }
+
+    GrblStateMachine {
+        id: stateMachine
     }
 
     Component.onCompleted: {

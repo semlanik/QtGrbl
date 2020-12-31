@@ -33,6 +33,7 @@ using namespace QtGrbl;
 
 GrblSerial::GrblSerial(QObject *parent) : QObject(parent)
   , m_status(GrblSerial::Idle)
+  , m_selectedPort(-1)
 {
     updatePortList();
 }
@@ -53,6 +54,11 @@ void GrblSerial::updatePortList()
         m_portList.append(port.portName());
     }
     emit portListChanged();
+}
+
+void GrblSerial::connectPort()
+{
+    GrblSerial::connectPort(m_selectedPort);
 }
 
 void GrblSerial::connectPort(int portIndex)
@@ -84,7 +90,7 @@ void GrblSerial::connectPort(int portIndex)
 
     emit isConnectedChanged();
 
-    connect(m_port.get(), &QSerialPort::readyRead, this, [this]() {
+    QObject::connect(m_port.get(), &QSerialPort::readyRead, this, [this]() {
         while (m_port->canReadLine()) {
             QByteArray grblData = m_port->readLine();
             qDebug() << "Raw data: "  << grblData.toHex();
@@ -103,7 +109,7 @@ void GrblSerial::connectPort(int portIndex)
             }
         }
     });
-    connect(m_port.get(), &QSerialPort::errorOccurred, this, &GrblSerial::onError);
+    QObject::connect(m_port.get(), &QSerialPort::errorOccurred, this, &GrblSerial::onError);
 }
 
 void GrblSerial::disconnectPort()

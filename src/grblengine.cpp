@@ -143,7 +143,8 @@ void GrblEngine::returnToZero()
     emit sendCommand(QByteArray("G0 Z0\n"), CommandPriority::Back);
 }
 
-void GrblEngine::requestParserState()
+void GrblEngine::updateGCodeState()
 {
-   emit sendCommand(QByteArray("$G\n"), CommandPriority::Immediate);
+    m_gcodeState->reset();
+    emit sendCommand(QByteArray("$G\n"), CommandPriority::Immediate);
 }
