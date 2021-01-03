@@ -53,6 +53,8 @@ public:
     Q_INVOKABLE void resetToZero();
     Q_INVOKABLE void hold();
     Q_INVOKABLE void resume();
+    Q_INVOKABLE void stop();
+    Q_INVOKABLE void reset();
     Q_INVOKABLE void updateGCodeState();
 
     QString filePath() const {

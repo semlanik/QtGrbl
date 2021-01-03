@@ -26,14 +26,14 @@ import QtQuick 2.0
 import QtQml.StateMachine 1.0 as DSM
 
 import QtGrbl 1.0
+import QmlPolicyStateMachine 1.0
 
-DSM.StateMachine {
+PolicyStateMachine {
     id: root
     initialState: disconnected
     running: true
-    property string currentState: ""
     signal toggleConnect()
-    TraceableState {
+    PolicyState {
         id: disconnected
         stateMachine: root
         name: "disconnected"
@@ -48,12 +48,12 @@ DSM.StateMachine {
     }
 
     //Grbl initialization
-    TraceableState {
+    PolicyState {
         id: connecting
         name: "connecting"
         stateMachine: root
         initialState: openPort
-        TraceableState {
+        PolicyState {
             id: openPort
             name: "openPort"
             stateMachine: root
@@ -66,7 +66,7 @@ DSM.StateMachine {
                 guard: GrblSerial.isConnected
             }
         }
-        TraceableState { //Give grbl time to initialize
+        PolicyState { //Give grbl time to initialize
             id: portReady
             name: "portReady"
             stateMachine: root
@@ -75,7 +75,7 @@ DSM.StateMachine {
                 timeout: 3000
             }
         }
-        TraceableState {
+        PolicyState {
             id: readSettings
             name: "readSettings"
             stateMachine: root
@@ -93,7 +93,7 @@ DSM.StateMachine {
                 timeout: 100
             }
         }
-        TraceableState {
+        PolicyState {
             id: readGCodeState
             name: "readGCodeState"
             stateMachine: root
@@ -106,46 +106,6 @@ DSM.StateMachine {
                 guard: GrblEngine.gcodeState.isValid
             }
         }
-    }
-
-    //Grbl working mode
-    TraceableState {
-        id: connected
-        name: "connected"
-        stateMachine: root
-        initialState: idle
-        TraceableState {
-            id: idle
-            name: "idle"
-            stateMachine: root
-        }
-        TraceableState {
-            id: progress
-            name: "progress"
-            stateMachine: root
-            initialState: running
-            TraceableState {
-                id: running
-                name: "running"
-                stateMachine: root
-            }
-            TraceableState {
-                id: hold
-                name: "hold"
-                stateMachine: root
-            }
-            TraceableState {
-                id: alert
-                name: "alert"
-                stateMachine: root
-            }
-        }
-        TraceableState {
-            id: error
-            name: "error"
-            stateMachine: root
-        }
-
         DSM.SignalTransition {
             targetState: disconnecting
             signal: root.toggleConnect
@@ -153,7 +113,51 @@ DSM.StateMachine {
         }
     }
 
-    TraceableState {
+    //Grbl working mode
+    PolicyState {
+        id: connected
+        name: "connected"
+        stateMachine: root
+        initialState: idle
+        PolicyState {
+            id: idle
+            name: "idle"
+            stateMachine: root
+        }
+        PolicyState {
+            id: progress
+            name: "progress"
+            stateMachine: root
+            initialState: running
+            PolicyState {
+                id: running
+                name: "running"
+                stateMachine: root
+            }
+            PolicyState {
+                id: hold
+                name: "hold"
+                stateMachine: root
+            }
+            PolicyState {
+                id: alert
+                name: "alert"
+                stateMachine: root
+            }
+        }
+        PolicyState {
+            id: error
+            name: "error"
+            stateMachine: root
+        }
+        DSM.SignalTransition {
+            targetState: disconnecting
+            signal: root.toggleConnect
+            guard: GrblSerial.isConnected
+        }
+    }
+
+    PolicyState {
         id: disconnecting
         name: "disconnecting"
         stateMachine: root
@@ -164,13 +168,6 @@ DSM.StateMachine {
             targetState: disconnected
             signal: GrblSerial.isConnectedChanged
             guard: !GrblSerial.isConnected
-        }
-    }
-
-    Connections {
-        target: GrblSerial
-        onIsConnectedChanged: {
-            console.log("GrblSerial: " + GrblSerial.isConnected)
         }
     }
 

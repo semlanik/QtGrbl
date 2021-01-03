@@ -60,6 +60,8 @@ public:
     Q_INVOKABLE void disconnectPort();
     Q_INVOKABLE void clearError();
 
+    void clearCommandQueue();
+
     void sendCommand(const QString &command, QtGrbl::CommandPriority prio = QtGrbl::CommandPriority::Back);
     void sendCommand(QByteArray command, QtGrbl::CommandPriority prio = QtGrbl::CommandPriority::Back);
 

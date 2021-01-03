@@ -32,6 +32,8 @@ import QtQml.Models 2.1
 
 import QtGrbl 1.0
 
+
+import QmlPolicyStateMachine 1.0
 import "GrblStateMachine"
 
 Window {
@@ -71,6 +73,7 @@ Window {
     TextField {
         id: consoleInput
         focus: true
+        StatePolicy.allowed: "idle"
         onActiveFocusChanged: {
             forceActiveFocus()
         }
@@ -107,14 +110,14 @@ Window {
             ComboBox {
                 id: portSelector
                 model: GrblSerial.portList
-                enabled: stateMachine.currentState === "disconnected"
+                StatePolicy.allowed: "disconnected"
                 onCurrentIndexChanged: {
                     GrblSerial.selectedPort = portSelector.currentIndex
                 }
             }
             Button {
                 text: "Update"
-                enabled: stateMachine.currentState === "disconnected"
+                StatePolicy.allowed: "disconnected"
                 onClicked: {
                     GrblSerial.updatePortList()
                 }
@@ -127,36 +130,42 @@ Window {
             }
             Button {
                 text: "Clear"
+                StatePolicy.allowed: "connected"
                 onClicked: {
                     GrblConsole.clear()
                 }
             }
             Button {
                 text: "Clear error"
+                StatePolicy.allowed: "error"
                 onClicked: {
                     GrblSerial.clearError()
                 }
             }
             Button {
                 text: "Select file"
+                StatePolicy.allowed: "idle"
                 onClicked: {
                     fileSelection.open()
                 }
             }
             Button {
                 text: "Start"
+                StatePolicy.allowed: "idle"
                 onClicked: {
                     GrblEngine.start();
                 }
             }
             Button {
                 text: "Reset to 0"
+                StatePolicy.allowed: "idle"
                 onClicked: {
                     GrblEngine.resetToZero();
                 }
             }
             Button {
                 text: "Return to 0"
+                StatePolicy.allowed: "idle"
                 onClicked: {
                     GrblEngine.returnToZero();
                 }

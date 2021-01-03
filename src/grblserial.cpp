@@ -142,8 +142,7 @@ void GrblSerial::onError(QSerialPort::SerialPortError error)
 
 void GrblSerial::sendCommand(const QString &command, QtGrbl::CommandPriority prio)
 {
-    QByteArray buffer = command.trimmed().toLatin1() + "\n";//TODO: add setting to switch carriage
-    //return symbol
+    QByteArray buffer = command.trimmed().toLatin1();
     sendCommand(buffer, prio);
 }
 
@@ -159,11 +158,10 @@ void GrblSerial::sendCommand(QByteArray command, QtGrbl::CommandPriority prio)
         return;
     }
 
-    if (command.endsWith("\r\n") || command.endsWith("\n\r")) {
-        command.resize(command.size() - 1);
-        command[command.size() - 1] = '\n';//TODO: add setting to switch carriage
-        //return symbol
-    }
+    command = command.trimmed();
+    command.append('\n'); /* TODO: add setting to switch carriage
+                           * return symbol
+                           */
 
     qDebug() << "Send command: " << command << "Prio: " << prio;
     switch (prio) {
@@ -233,3 +231,9 @@ void GrblSerial::clearError()
     processQueue();
 }
 
+void GrblSerial::clearCommandQueue()
+{
+    m_queue.clear();
+    m_sent.clear();
+    sendCommand(QByteArray("\x85"), CommandPriority::Immediate);
+}

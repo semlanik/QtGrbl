@@ -28,6 +28,8 @@ find_package(Qt5 COMPONENTS Core Quick LinguistTools SerialPort REQUIRED)
 
 set(TS_FILES qtgrbl_en_US.ts)
 
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/QmlPolicyStateMachine")
+
 if(ANDROID)
     add_library(qtgrbl SHARED
       main.cpp

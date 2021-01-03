@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
     qmlRegisterUncreatableType<QtGrbl::GrblGCodeState>("QtGrbl", 1, 0, "GrblGCodeState", "Uncreatable");
 
     QQmlApplicationEngine engine;
+    engine.addImportPath("./src"); //TODO: should be replaces by correct import path from installation directory
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
                      &app, [url](QObject *obj, const QUrl &objUrl) {

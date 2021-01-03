@@ -22,24 +22,11 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+
 import QtQuick 2.0
 import QtQml.StateMachine 1.0 as DSM
 
-DSM.State {
+DSM.StateMachine {
     id: root
-    property string name: ""
-    property DSM.StateMachine stateMachine: null
-    onEntered: {
-        if (root.name == "") {
-            console.error("GrblStateMachine: State doesn't have name assigned.");
-            //TODO: Return to previous state here
-            return;
-        }
-
-        stateMachine.currentState = root.name
-        console.log("GrblStateMachine: Entered: " + root.name)
-    }
-    onExited: {
-        console.log("GrblStateMachine: Exited: " + root.name)
-    }
+    property string currentState: ""
 }
