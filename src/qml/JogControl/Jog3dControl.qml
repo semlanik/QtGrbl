@@ -23,68 +23,64 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-import QtQuick 2.0
+import QtQuick 2.15
+import QtQuick.Window 2.15
+import QtQuick.Controls 2.12
 import QtQuick3D 1.15
+import QtQuick3D.Helpers 1.15
+import QtQuick3D.Effects 1.15
 
-Node {
+View3D {
     id: root
-
-    property var rectPos: Qt.vector3d(250, 250, 12)
-
-    Model {
-        position: Qt.vector3d(0, 0, 0)
-        source: "#Sphere"
-        materials: DefaultMaterial {
-            diffuseColor: "grey"
-        }
+    property bool type: false
+    anchors {
+        top: controlType.bottom
+        bottom: parent.botton
+        left: parent.left
+        right: parent.right
     }
 
-    GizmoArrow {
-        objectName: "z+"
-        eulerRotation: Qt.vector3d(0, 0, 0)
-        arrowColor: "blue"
-
-        Node {
-            position: rectPos
-
-            Rectangle {
-                width: 100
-                height: 100
-                color: "blue"
-            }
-        }
+    environment: SceneEnvironment {
+        antialiasingMode: SceneEnvironment.MSAA
     }
 
-    GizmoArrow {
-        objectName: "x+"
-        eulerRotation: Qt.vector3d(-90, 0, -90)
-        arrowColor: "red"
+    OrthographicCamera {
+        id: mainCamera
 
-        Node {
-            position: rectPos
-
-            Rectangle {
-                width: 100
-                height: 100
-                color: "red"
-            }
-        }
+        position: Qt.vector3d(0, 0, 500)
+        clipNear: 0
+        clipFar: 2000
     }
 
-    GizmoArrow {
-        objectName: "y+"
-        eulerRotation: Qt.vector3d(0, 90, 90)
+    DirectionalLight {
+        brightness: 100
+    }
 
-        arrowColor: "green"
+    Node {
+        id: control3d
+        scale: Qt.vector3d(0.4, 0.4, 0.4)
+        eulerRotation: Qt.vector3d(20, -45, -20)
 
-        Node {
-            position: rectPos
-
-            Rectangle {
-                width: 100
-                height: 100
-                color: "green"
-            }
+        GizmoControl {
+            visible: !root.type
         }
+        PlaneControl {
+            visible: root.type
+        }
+
+// TODO: Loader3D crashes, need to investigate why
+//        Loader3D {
+//            sourceComponent: root.type ? jogControl : gizmoControl
+//        }
+//        Component {
+//            id: planeControl
+//            PlaneControl {
+//            }
+//        }
+//        Component {
+//            id: gizmoControl
+//            GizmoControl {
+//            }
+//        }
     }
 }

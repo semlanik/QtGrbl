@@ -24,10 +24,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #    endif()
 #endif()
 
-find_package(Qt5 COMPONENTS Core Quick LinguistTools SerialPort REQUIRED)
+find_package(Qt5 COMPONENTS Core Quick LinguistTools SerialPort Quick3D REQUIRED)
 
 set(TS_FILES qtgrbl_en_US.ts)
 
+set(QML_IMPORT_PATH2 "${CMAKE_CURRENT_BINARY_DIR}/src" CACHE STRING "")
+set(QML_IMPORT_PATH "${CMAKE_CURRENT_BINARY_DIR}/src" CACHE STRING "")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/QmlPolicyStateMachine")
 
 if(ANDROID)
@@ -56,6 +58,6 @@ target_include_directories(qtgrbl PRIVATE src)
 target_compile_definitions(qtgrbl
   PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 target_link_libraries(qtgrbl
-  PRIVATE Qt5::Core Qt5::Quick Qt5::SerialPort)
+  PRIVATE Qt5::Core Qt5::Quick Qt5::SerialPort Qt5::Quick3D)
 
 qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})

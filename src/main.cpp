@@ -30,6 +30,9 @@
 #include "grblconsole.h"
 #include "grblgcodestate.h"
 
+#include <QSurfaceFormat>
+#include <QQuick3D>
+
 #include <memory>
 
 int main(int argc, char *argv[])
@@ -37,7 +40,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
     QGuiApplication app(argc, argv);
-
+    QSurfaceFormat::setDefaultFormat(QQuick3D::idealSurfaceFormat());
     std::shared_ptr<QtGrbl::GrblSerial> serialEngine = std::make_shared<QtGrbl::GrblSerial>();
     std::shared_ptr<QtGrbl::GrblEngine> glrblEngine = std::make_shared<QtGrbl::GrblEngine>();
     std::shared_ptr<QtGrbl::GrblConsole> console = std::make_shared<QtGrbl::GrblConsole>();

@@ -35,6 +35,7 @@ import QtGrbl 1.0
 
 import QmlPolicyStateMachine 1.0
 import "GrblStateMachine"
+import "JogControl"
 
 Window {
     width: 640
@@ -57,6 +58,23 @@ Window {
                 model: GrblConsole
                 width: parent.width
                 height: 500
+            }
+            Item {
+                height: 500
+                width: parent.width
+                Switch { //TODO: replace with multistate button(like radio button)
+                    id: controlType
+                    text: "Control type"
+                    checked: false
+                }
+                Jog3dControl {
+                    id: jog
+                    type: controlType.checked
+                    anchors.top: controlType.top
+                    anchors.bottom: parent.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                }
             }
         }
     }

@@ -5,9 +5,11 @@
         <file>SideToolbar.qml</file>
         <file>GCodeStateView.qml</file>
         <file>GrblStateMachine/GrblStateMachine.qml</file>
-        <file>GizmoControl/GizmoArrow.qml</file>
-        <file>GizmoControl/GizmoControl.qml</file>
-        <file>GizmoControl/qmldir</file>
-        <file>GizmoControl/StaticGizmo.qml</file>
+        <file>JogControl/GizmoArrow.qml</file>
+        <file>JogControl/Jog3dControl.qml</file>
+        <file>JogControl/qmldir</file>
+        <file>JogControl/GizmoControl.qml</file>
+        <file>JogControl/GizmoJogPlane.qml</file>
+        <file>JogControl/PlaneControl.qml</file>
     </qresource>
 </RCC>

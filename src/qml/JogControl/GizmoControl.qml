@@ -23,37 +23,50 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-
-import QtQuick 2.15
-import QtQuick.Window 2.15
+import QtQuick 2.0
 import QtQuick3D 1.15
-import QtQuick3D.Helpers 1.15
 
-View3D {
-    id: view
+Node {
+    id: root
 
-    environment: {
-        antialiasingMode: SceneEnvironment.ProgressiveAA
-        antialiasingQuality: SceneEnvironment.VeryHigh
-        temporalAAEnabled: true
-        temporalAAStrength: 2.0
+    Model {
+        position: Qt.vector3d(0, 0, 0)
+        source: "#Sphere"
+        materials: DefaultMaterial {
+            diffuseColor: "grey"
+        }
     }
 
-    OrthographicCamera {
-        id: mainCamera
-
-        position: Qt.vector3d(0, 0, 1500)
-        clipNear: 0
-        clipFar: 3000
+    GizmoArrow {
+        objectName: "z+"
+        eulerRotation: Qt.vector3d(0, 0, 0)
+        arrowColor: "blue"
     }
 
-    DirectionalLight {
-        position: Qt.vector3d(0, 0, 1500)
-        brightness: 100
+    GizmoArrow {
+        objectName: "x+"
+        eulerRotation: Qt.vector3d(-90, 0, -90)
+        arrowColor: "red"
     }
 
-    StaticGizmo {
-        scale: Qt.vector3d(0.25, 0.25, 0.25)
-        eulerRotation: Qt.vector3d(20, -45, -20)
+    GizmoArrow {
+        objectName: "y+"
+        eulerRotation: Qt.vector3d(0, 90, 90)
+        arrowColor: "green"
+    }
+
+    GizmoJogPlane {
+        color: "blue"
+        eulerRotation: Qt.vector3d(0, 0, 0)
+    }
+
+    GizmoJogPlane {
+        eulerRotation: Qt.vector3d(-90, 0, -90)
+        color: "red"
+    }
+
+    GizmoJogPlane {
+        eulerRotation: Qt.vector3d(0, 90, 90)
+        color: "green"
     }
 }

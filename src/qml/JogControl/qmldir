@@ -1,0 +1,7 @@
+module GizmoControl
+
+GizmoArrow 1.0 GizmoArrow.qml
+GizmoControl 1.0 GizmoControl.qml 
+GizmoJogPlane 1.0 GizmoJogPlane.qml
+Jog3dControl 1.0 Jog3dControl.qml
+JogPlane 1.0 JogPlane.qml

@@ -1,5 +1,0 @@
-module GizmoControl
-
-GizmoArrow 1.0 GizmoArrow.qml
-GizmoControl 1.0 GizmoControl.qml 
-StaticGizmo 1.0 StaticGizmo.qml

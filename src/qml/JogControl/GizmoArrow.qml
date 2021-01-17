@@ -91,6 +91,7 @@ Node {
         source: "#Cone"
         pickable: true
         position: Qt.vector3d(0, 500, 0)
+        scale: Qt.vector3d(0.5, 1, 0.5)
         materials: DefaultMaterial {
             diffuseColor: isHovered ? hoverColor : arrowColor
         }
