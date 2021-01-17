@@ -5,5 +5,9 @@
         <file>SideToolbar.qml</file>
         <file>GCodeStateView.qml</file>
         <file>GrblStateMachine/GrblStateMachine.qml</file>
+        <file>GizmoControl/GizmoArrow.qml</file>
+        <file>GizmoControl/GizmoControl.qml</file>
+        <file>GizmoControl/qmldir</file>
+        <file>GizmoControl/StaticGizmo.qml</file>
     </qresource>
 </RCC>
