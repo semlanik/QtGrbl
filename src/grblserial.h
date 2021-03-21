@@ -63,7 +63,8 @@ public:
     void clearCommandQueue();
 
     void sendCommand(const QString &command, QtGrbl::CommandPriority prio = QtGrbl::CommandPriority::Back);
-    void sendCommand(QByteArray command, QtGrbl::CommandPriority prio = QtGrbl::CommandPriority::Back);
+    void sendCommand(const QByteArray &command, QtGrbl::CommandPriority prio = QtGrbl::CommandPriority::Back);
+    void sendCommand(QByteArrayList commands, QtGrbl::CommandPriority prio = QtGrbl::CommandPriority::Back);
 
     QStringList portList() const {
         return m_portList;
@@ -77,6 +78,13 @@ public:
 
     int selectedPort() const {
         return m_selectedPort;
+    }
+
+    void setStatus(Status status) {
+        if (status != m_status) {
+            m_status = status;
+            emit statusChanged();
+        }
     }
 
 public slots:

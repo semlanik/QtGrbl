@@ -29,6 +29,7 @@ import QtQuick.Controls 2.5
 import QtQuick.Layouts 1.12
 import QtQuick.Dialogs 1.3
 import QtQml.Models 2.1
+import QtQuick.Controls.Material 2.12
 
 import QtGrbl 1.0
 
@@ -42,11 +43,15 @@ Window {
     height: 480
     title: qsTr("QtGrbl")
 
+    Material.theme: Universal.Dark
+    Material.accent: Universal.Violet
+
     SideToolbar {
         id: leftToolbar
         position: "left"
         content: ObjectModel {
             GCodeStateView {}
+            GrblStatusView {}
         }
     }
 
@@ -65,7 +70,7 @@ Window {
                 Switch { //TODO: replace with multistate button(like radio button)
                     id: controlType
                     text: "Control type"
-                    checked: false
+                    checked: true
                 }
                 Jog3dControl {
                     id: jog
@@ -91,7 +96,8 @@ Window {
     TextField {
         id: consoleInput
         focus: true
-        StatePolicy.allowed: "idle"
+        objectName: "consoleInput"
+        StatePolicy.allowed: "idle|error|alarm"
         onActiveFocusChanged: {
             forceActiveFocus()
         }
@@ -169,9 +175,33 @@ Window {
             }
             Button {
                 text: "Start"
+                visible: enabled
                 StatePolicy.allowed: "idle"
                 onClicked: {
                     GrblEngine.start();
+                }
+            }
+            Button {
+                text: "Stop"
+                visible: enabled
+                StatePolicy.allowed: "running"
+                onClicked: {
+                    GrblEngine.stop();
+                }
+            }
+            Button {
+                objectName: "holdButton"
+                text: "Hold"
+                StatePolicy.forbidden: "hold|alarm"
+                onClicked: {
+                    GrblEngine.hold();
+                }
+            }
+            Button {
+                text: "Resume"
+                StatePolicy.allowed: "hold"
+                onClicked: {
+                    GrblEngine.resume();
                 }
             }
             Button {

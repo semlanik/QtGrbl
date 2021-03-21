@@ -26,10 +26,11 @@
 #pragma once
 
 #include <memory>
-#include <QQueue>
+
 #include <QFile>
 #include <QFileInfo>
 #include <QPointer>
+#include <QTimer>
 
 #include "qtgrblcommon.h"
 
@@ -37,12 +38,14 @@ namespace QtGrbl {
 
 class GrblSerial;
 class GrblGCodeState;
+class GrblStatus;
 
 class GrblEngine : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString filePath READ filePath WRITE setFilePath NOTIFY filePathChanged)
     Q_PROPERTY(QtGrbl::GrblGCodeState *gcodeState READ gcodeState CONSTANT)
+    Q_PROPERTY(QtGrbl::GrblStatus *grblStatus READ grblStatus CONSTANT)
 public:
     explicit GrblEngine(QObject *parent = nullptr);
     virtual ~GrblEngine();
@@ -56,6 +59,8 @@ public:
     Q_INVOKABLE void stop();
     Q_INVOKABLE void reset();
     Q_INVOKABLE void updateGCodeState();
+    Q_INVOKABLE void subscribeStatusUpdate();
+    Q_INVOKABLE void unsubscribeStatusUpdate();
 
     QString filePath() const {
         return QFileInfo(m_file).absoluteFilePath();
@@ -67,17 +72,27 @@ public:
 
     void setFilePath(const QString &fileUrl);
 
+    QtGrbl::GrblStatus *grblStatus() const {
+        return m_grblStatus.get();
+    }
+
 signals:
     void consoleOutputChanged();
     void filePathChanged();
 
     void sendCommand(const QByteArray &command, QtGrbl::CommandPriority prio);
+    void sendCommand(const QByteArrayList &command, QtGrbl::CommandPriority prio);
     void gcodeStateChanged();
+    void grblStateChanged();
 
 private:
+    void initStatusUpdates();
+
     QFile m_file;
     std::weak_ptr<GrblSerial> m_serialEngine;
     std::unique_ptr<GrblGCodeState> m_gcodeState;
+    std::unique_ptr<QtGrbl::GrblStatus> m_grblStatus;
+    QTimer m_statusTimer;
 };
 
 }

@@ -32,8 +32,8 @@ Node {
     Model {
         position: Qt.vector3d(0, 0, 0)
         source: "#Sphere"
-        materials: DefaultMaterial {
-            diffuseColor: "grey"
+        materials: PlainMaterial {
+            baseColor: "grey"
         }
     }
 

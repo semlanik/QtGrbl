@@ -42,7 +42,14 @@ void GrblConsole::writeCommand(const QByteArray &buffer)
 
 void GrblConsole::writeResponse(const QByteArray &buffer)
 {
-    append(new GrblConsoleRecord(GrblConsoleRecord::Response, QDateTime::currentDateTime(),
+    auto type = GrblConsoleRecord::Response;
+    if (buffer.startsWith(QtGrbl::GrblStatusPrefix)) {
+        if (m_noStatus) {
+            return;
+        }
+        type = GrblConsoleRecord::Status;
+    }
+    append(new GrblConsoleRecord(type, QDateTime::currentDateTime(),
                                  QString::fromLatin1(buffer)));
 }
 

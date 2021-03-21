@@ -23,32 +23,38 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+import QtQuick 2.0
 
-#include <QQmlEngine>
+import QtGrbl 1.0
+//ToDo: SidebarItem should be here
+Rectangle {
+    id: root
+    color: "#dddddd"
+    border.width: 1
+    width: parent.width
+    height: childrenRect.height
 
-namespace QtGrbl {
-    enum CommandPriority {
-        Back,     //! Push to end of queue(default)
-        Front,    //! Push to front of queue
-        Immediate //! Immediate send command without avaiting of previous acknowledge
-    };
-
-    template<typename T>
-    void qmlRegisterGrblSingleton(const char *typeName, std::shared_ptr<T> pointer) {
-        qmlRegisterSingletonType<T>("QtGrbl", 1, 0, typeName, [pointer](QQmlEngine *engine, QJSEngine *){
-            auto instance = pointer.get();
-            engine->setObjectOwnership(instance, QQmlEngine::CppOwnership);
-            return instance;
-        });
+    Column {
+        width: parent.width
+        Text {
+            width: root.width
+            height: implicitHeight
+            text: "Status: " + GrblEngine.grblStatus.grblState
+        }
+        Text {
+            width: root.width
+            height: implicitHeight
+            text: "X: " + GrblEngine.grblStatus.x
+        }
+        Text {
+            width: root.width
+            height: implicitHeight
+            text: "Y: " + GrblEngine.grblStatus.y
+        }
+        Text {
+            width: root.width
+            height: implicitHeight
+            text: "Z: " + GrblEngine.grblStatus.z
+        }
     }
-
-    const unsigned int GrblMaxCommandLineSize = 128;
-
-    constexpr const char *GCodeStatePrefix = "[GC:";
-    constexpr const char *GCodeStatePostfix = "]";
-    constexpr const char *GrblStatusPrefix = "<";
-    constexpr const char *GrblStatePostfix = ">";
-    constexpr int GCodeStatePrefixLen = strlen(GCodeStatePrefix);
-    constexpr int GCodeStatePostfixLen = strlen(GCodeStatePostfix);
 }

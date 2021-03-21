@@ -42,6 +42,68 @@ View3D {
 
     environment: SceneEnvironment {
         antialiasingMode: SceneEnvironment.MSAA
+//        effects: [
+//            Effect {
+//                property real radius: 100.0             // 0 - 100
+//                property real distortionWidth: 10.0     // 2 - 100
+//                property real distortionHeight: 10.0    // 0 - 100
+//                property real distortionPhase: 0.0      // 0 - 360
+//                property vector2d center: Qt.vector2d(1.0, 1.0)
+//                Shader {
+//                    id: vert
+//                    stage: Shader.Vertex
+//                    shader:"varying vec4 TexCoordBLL; // Bottom Left and Bottom Tap
+//varying vec4 TexCoordTLT; // Top Left and Top Tap
+//varying vec4 TexCoordTRR; // Upper Right and Right Tap
+//varying vec4 TexCoordBRB; // Bottom Right and Bottom Tap
+
+//void vert()
+//{
+//    vec2 delta = vec2(1.0 / Texture0Info.x, 1.0 / Texture0Info.y);
+//    TexCoordBLL = vec4(TexCoord.st, TexCoord.st) + vec4(-delta.xy, -delta.x, 0);
+//    TexCoordTLT = vec4(TexCoord.st, TexCoord.st) + vec4(-delta.x, delta.y, 0, delta.y);
+//    TexCoordTRR = vec4(TexCoord.st, TexCoord.st) + vec4(delta.xy, delta.x, 0);
+//    TexCoordBRB = vec4(TexCoord.st, TexCoord.st) + vec4(delta.x, -delta.y, 0, -delta.y);
+//}
+//"
+//                }
+
+//                Shader {
+//                    id: frag
+//                    stage: Shader.Fragment
+//                    shader: "varying vec4 TexCoordBLL; // Bottom Left and Bottom Tap
+//varying vec4 TexCoordTLT; // Top Left and Top Tap
+//varying vec4 TexCoordTRR; // Upper Right and Right Tap
+//varying vec4 TexCoordBRB; // Bottom Right and Bottom Tap
+
+//void frag (void)
+//{
+//    vec4 centerTap = texture2D_0(TexCoord);
+//    vec4 edgeTap = texture2D_0(TexCoordBLL.xy)
+//            + texture2D_0(TexCoordBLL.zw)
+//            + texture2D_0(TexCoordTLT.xy)
+//            + texture2D_0(TexCoordTLT.zw)
+//            + texture2D_0(TexCoordTRR.xy)
+//            + texture2D_0(TexCoordTRR.zw)
+//            + texture2D_0(TexCoordBRB.xy)
+//            + texture2D_0(TexCoordBRB.zw);
+//    vec3 edgeDetect = (centerTap.rgb - (0.125 * edgeTap.rgb));
+//    if(abs(edgeDetect.x)+abs(edgeDetect.y)+abs(edgeDetect.z) > 0.5) {
+//        edgeDetect = vec3(1.0, 1.0, 1.0);
+//    } else {
+//        edgeDetect = vec3(0,0,0);
+//    }
+//    colorOutput(vec4(edgeDetect, 1.0));
+//}"
+//                }
+
+//                passes: [
+//                    Pass {
+//                        shaders: [ vert, frag ]
+//                    }
+//                ]
+//            }
+//        ]
     }
 
     OrthographicCamera {
@@ -52,9 +114,9 @@ View3D {
         clipFar: 2000
     }
 
-    DirectionalLight {
-        brightness: 100
-    }
+//    DirectionalLight {
+//        brightness: 100
+//    }
 
     Node {
         id: control3d

@@ -25,23 +25,42 @@
 
 #include "grblengine.h"
 
-#include "grblserial.h"
 #include "grblgcodestate.h"
+#include "grblserial.h"
+#include "grblstatus.h"
 
 #include <QFile>
+#include <QTimer>
 #include <QUrl>
+
 #include <QDebug>
+
+namespace {
+    // 5Hz according to recomendation:
+    // https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface#status-reporting
+    constexpr int StatusUpdateInterval = 200;
+}
 
 using namespace QtGrbl;
 
 GrblEngine::GrblEngine(QObject *parent) : QObject(parent)
   , m_gcodeState(std::make_unique<GrblGCodeState>())
+  , m_grblStatus(std::make_unique<GrblStatus>())
 {
+    initStatusUpdates();
 }
-
 
 GrblEngine::~GrblEngine()
 {
+}
+
+void GrblEngine::initStatusUpdates()
+{
+    m_statusTimer.setInterval(StatusUpdateInterval);
+    m_statusTimer.setSingleShot(false);
+    connect(&m_statusTimer, &QTimer::timeout, this, [this] {
+        emit sendCommand("?", CommandPriority::Immediate);
+    });
 }
 
 void GrblEngine::setFilePath(const QString &fileUrl)
@@ -89,7 +108,7 @@ void GrblEngine::resetToZero()
         qCritical() << "Unable to reset to zero, serial engine is null";
         return;
     }
-    emit sendCommand(QByteArray("G92 X0 Y0 Z0"), CommandPriority::Front);
+    emit sendCommand(QByteArray("G92 X0 Y0 Z0"), CommandPriority::Back);
 }
 
 void GrblEngine::attach(const std::weak_ptr<GrblSerial> &serialEngine)
@@ -102,10 +121,15 @@ void GrblEngine::attach(const std::weak_ptr<GrblSerial> &serialEngine)
     m_serialEngine = serialEngine;
     auto engine = m_serialEngine.lock();
 
-    connect(this, &GrblEngine::sendCommand, engine.get(), qOverload<QByteArray, QtGrbl::CommandPriority>(&GrblSerial::sendCommand));
+    connect(this, qOverload<const QByteArray &, QtGrbl::CommandPriority>(&GrblEngine::sendCommand),
+            engine.get(), qOverload<const QByteArray &, QtGrbl::CommandPriority>(&GrblSerial::sendCommand));
+    connect(this, qOverload<const QByteArrayList &, QtGrbl::CommandPriority>(&GrblEngine::sendCommand),
+            engine.get(), qOverload<QByteArrayList, QtGrbl::CommandPriority>(&GrblSerial::sendCommand));
     connect(engine.get(), &GrblSerial::responseReceived, this, [this](const QByteArray &response) {
         if (response.startsWith(GCodeStatePrefix)) {
-            m_gcodeState->fromRawData(response);
+            m_gcodeState->parseRawData(response);
+        } else if (response.startsWith(GrblStatusPrefix)) {
+            m_grblStatus->parseRawData(response);
         }
     });
 }
@@ -117,7 +141,8 @@ void GrblEngine::hold()
         qCritical() << "Unable to hold, serial engine is null";
         return;
     }
-    emit sendCommand(QByteArray("!"), CommandPriority::Immediate);
+    //Stop Spindle first
+    emit sendCommand(QByteArrayList() << "M5" << "!", CommandPriority::Immediate);
 }
 
 void GrblEngine::resume()
@@ -127,7 +152,8 @@ void GrblEngine::resume()
         qCritical() << "Unable to resume, serial engine is null";
         return;
     }
-    emit sendCommand(QByteArray("~"), CommandPriority::Immediate);
+    emit sendCommand(QByteArrayList() << "~" << "?", CommandPriority::Immediate);
+    subscribeStatusUpdate();
 }
 
 void GrblEngine::stop()
@@ -137,22 +163,19 @@ void GrblEngine::stop()
         qCritical() << "Unable to resume, serial engine is null";
         return;
     }
-    engine->clearCommandQueue(); //TODO: replace with signal
-    emit sendCommand(QByteArray("M0"), CommandPriority::Immediate);
+    emit sendCommand(QByteArrayList() << "M5" << "M0", CommandPriority::Immediate);
+    engine->clearCommandQueue();
 }
 
 void GrblEngine::returnToZero()
 {
-    //TODO: make homing cycle instead
     auto engine = m_serialEngine.lock();
     if (!engine) {
         qCritical() << "Unable to resume, serial engine is null";
         return;
     }
-    emit sendCommand(QByteArray("G90"), CommandPriority::Front);
-    emit sendCommand(QByteArray("G0 Z5"), CommandPriority::Front);
-    emit sendCommand(QByteArray("G0 Y0 X0"), CommandPriority::Front);
-    emit sendCommand(QByteArray("G0 Z0"), CommandPriority::Front);
+    emit sendCommand(QByteArrayList() << "G90" << "G0 Z5" << "G0 Y0 X0" << "G0 Z0",
+                     CommandPriority::Front);
 }
 
 void GrblEngine::reset()
@@ -164,4 +187,14 @@ void GrblEngine::updateGCodeState()
 {
     m_gcodeState->reset();
     emit sendCommand(QByteArray("$G"), CommandPriority::Immediate);
+}
+
+void GrblEngine::subscribeStatusUpdate()
+{
+    m_statusTimer.start();
+}
+
+void GrblEngine::unsubscribeStatusUpdate()
+{
+    m_statusTimer.stop();
 }

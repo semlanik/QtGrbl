@@ -38,6 +38,7 @@ namespace QtGrbl {
 class GrblConsole : public UniversalListModel<GrblConsoleRecord>
 {
     Q_OBJECT
+    Q_PROPERTY(bool noStatus READ noStatus WRITE setNoStatus NOTIFY noStatusChanged)
     Q_PROPERTY(bool saveToFile READ saveToFile WRITE setSaveToFile NOTIFY saveToFileChanged)
     Q_PROPERTY(QString recentInput READ recentInput WRITE setUserInput NOTIFY recentInputChanged)
 public:
@@ -105,6 +106,11 @@ public:
         return m_recentInput;
     }
 
+    bool noStatus() const
+    {
+        return m_noStatus;
+    }
+
 public slots:
     void setUserInput(const QString &recentInput) {
         if (m_recentInput == recentInput)
@@ -114,6 +120,15 @@ public slots:
         emit recentInputChanged(m_recentInput);
     }
 
+    void setNoStatus(bool noStatus)
+    {
+        if (m_noStatus == noStatus)
+            return;
+
+        m_noStatus = noStatus;
+        emit noStatusChanged(m_noStatus);
+    }
+
 signals:
     //! Do not use this method directly
     void sendCommand(const QString &command, QtGrbl::CommandPriority prio);
@@ -121,12 +136,15 @@ signals:
 
     void recentInputChanged(QString recentInput);
 
+    void noStatusChanged(bool noStatus);
+
 private:
     QFile m_logFile;
     bool m_saveToFile;
     std::list<QString> m_inputHistory;
     std::list<QString>::const_iterator m_inputHistoryPointer;
     QString m_recentInput;
+    bool m_noStatus;
 };
 
 }

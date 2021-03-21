@@ -11,5 +11,8 @@
         <file>JogControl/GizmoControl.qml</file>
         <file>JogControl/GizmoJogPlane.qml</file>
         <file>JogControl/PlaneControl.qml</file>
+        <file>JogControl/PlainMaterial.qml</file>
+        <file>qtquickcontrols2.conf</file>
+        <file>GrblStatusView.qml</file>
     </qresource>
 </RCC>

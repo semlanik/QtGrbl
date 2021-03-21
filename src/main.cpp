@@ -25,10 +25,11 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 
-#include "grblengine.h"
-#include "grblserial.h"
 #include "grblconsole.h"
+#include "grblengine.h"
 #include "grblgcodestate.h"
+#include "grblserial.h"
+#include "grblstatus.h"
 
 #include <QSurfaceFormat>
 #include <QQuick3D>
@@ -60,6 +61,7 @@ int main(int argc, char *argv[])
 
     qmlRegisterUncreatableType<QtGrbl::GrblConsoleRecord>("QtGrbl", 1, 0, "GrblConsoleRecord", "Uncreatable");
     qmlRegisterUncreatableType<QtGrbl::GrblGCodeState>("QtGrbl", 1, 0, "GrblGCodeState", "Uncreatable");
+    qmlRegisterUncreatableType<QtGrbl::GrblStatus>("QtGrbl", 1, 0, "GrblStatus", "Uncreatable");
 
     QQmlApplicationEngine engine;
     engine.addImportPath("./src"); //TODO: should be replaces by correct import path from installation directory

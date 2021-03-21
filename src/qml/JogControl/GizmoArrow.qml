@@ -71,8 +71,8 @@ Node {
         pickable: true
         scale: Qt.vector3d(0.3, 5, 0.3)
         position: Qt.vector3d(0, 250, 0)
-        materials: DefaultMaterial {
-            diffuseColor: isHovered ? hoverColor : arrowColor
+        materials: PlainMaterial {
+            baseColor: isHovered ? hoverColor : arrowColor
         }
     }
 
@@ -92,8 +92,8 @@ Node {
         pickable: true
         position: Qt.vector3d(0, 500, 0)
         scale: Qt.vector3d(0.5, 1, 0.5)
-        materials: DefaultMaterial {
-            diffuseColor: isHovered ? hoverColor : arrowColor
+        materials: PlainMaterial {
+            baseColor: isHovered ? hoverColor : arrowColor
         }
     }
 }

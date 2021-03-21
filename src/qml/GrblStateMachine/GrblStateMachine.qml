@@ -38,7 +38,7 @@ PolicyStateMachine {
         stateMachine: root
         name: "disconnected"
         onEntered: {
-            console.log("Entered level 2" + name)
+            GrblSerial.updatePortList();
         }
 
         DSM.SignalTransition {
@@ -64,6 +64,11 @@ PolicyStateMachine {
                 targetState: portReady
                 signal: GrblSerial.isConnectedChanged
                 guard: GrblSerial.isConnected
+            }
+            DSM.SignalTransition {
+                targetState: disconnected
+                signal: GrblSerial.isConnectedChanged
+                guard: !GrblSerial.isConnected
             }
         }
         PolicyState { //Give grbl time to initialize
@@ -119,35 +124,53 @@ PolicyStateMachine {
         name: "connected"
         stateMachine: root
         initialState: idle
+        onEntered: {
+            GrblEngine.subscribeStatusUpdate();
+        }
+        onExited: {
+            GrblEngine.unsubscribeStatusUpdate();
+        }
+        DSM.SignalTransition {
+            targetState: idle
+            signal: GrblEngine.grblStatus.grblStateChanged
+            guard: GrblEngine.grblStatus.grblState === GrblStatus.Idle
+        }
+        DSM.SignalTransition {
+            targetState: running
+            signal: GrblEngine.grblStatus.grblStateChanged
+            guard: GrblEngine.grblStatus.grblState === GrblStatus.Run
+        }
+        DSM.SignalTransition {
+            targetState: alarm
+            signal: GrblEngine.grblStatus.grblStateChanged
+            guard: GrblEngine.grblStatus.grblState === GrblStatus.Alarm
+        }
+        DSM.SignalTransition {
+            targetState: hold
+            signal: GrblEngine.grblStatus.grblStateChanged
+            guard: GrblEngine.grblStatus.grblState === GrblStatus.Hold
+        }
         PolicyState {
             id: idle
             name: "idle"
             stateMachine: root
         }
         PolicyState {
-            id: progress
-            name: "progress"
+            id: hold
+            name: "hold"
             stateMachine: root
-            initialState: running
-            PolicyState {
-                id: running
-                name: "running"
-                stateMachine: root
-            }
-            PolicyState {
-                id: hold
-                name: "hold"
-                stateMachine: root
-            }
-            PolicyState {
-                id: alert
-                name: "alert"
-                stateMachine: root
+            onEntered: {
+                GrblEngine.unsubscribeStatusUpdate();
             }
         }
         PolicyState {
-            id: error
-            name: "error"
+            id: running
+            name: "running"
+            stateMachine: root
+        }
+        PolicyState {
+            id: alarm
+            name: "alarm"
             stateMachine: root
         }
         DSM.SignalTransition {
@@ -155,6 +178,12 @@ PolicyStateMachine {
             signal: root.toggleConnect
             guard: GrblSerial.isConnected
         }
+    }
+
+    PolicyState {
+        id: error
+        name: "error"
+        stateMachine: root
     }
 
     PolicyState {

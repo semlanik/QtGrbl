@@ -41,14 +41,16 @@ if(ANDROID)
 else()
     add_executable(qtgrbl
       src/main.cpp
-      src/grblengine.cpp
-      src/grblconsole.cpp
-      src/grblserial.cpp
-      src/grblconsolerecord.cpp
-      src/universallistmodel.cpp
+      src/grblengine.cpp src/grblengine.h
+      src/grblconsole.cpp src/grblconsole.h
+      src/grblserial.cpp src/grblserial.h
+      src/grblconsolerecord.cpp src/grblconsolerecord.h
+      src/universallistmodel.cpp src/universallistmodel.h
       src/universallistmodelbase.cpp
-      src/grblremotemessagebuffer.cpp
-      src/grblgcodestate.cpp
+      src/grblremotemessagebuffer.cpp src/grblremotemessagebuffer.h
+      src/grblgcodestate.cpp src/grblgcodestate.h
+      src/grblstatus.cpp src/grblstatus.h
+      src/grblabstractdatamodel.cpp src/grblabstractdatamodel.h
       src/qml/qml.qrc
       ${TS_FILES}
     )

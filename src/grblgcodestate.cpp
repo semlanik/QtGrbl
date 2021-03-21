@@ -113,7 +113,7 @@ static std::unordered_map<QByteArray, QByteArray> propertyMap = {{"G0", "motionM
                                                                  ,{"M9", "coolantState"}};
 }
 
-GrblGCodeState::GrblGCodeState(const QByteArray &stateData, QObject *parent) : QObject(parent)
+GrblGCodeState::GrblGCodeState(const QByteArray &stateData, QObject *parent) : GrblAbstractDataModel(parent)
   , m_motionMode(CancelCannedCycle)
   , m_planeSelect(XYPlane)
   , m_distanceMode(AbsoluteProgramming)
@@ -127,30 +127,23 @@ GrblGCodeState::GrblGCodeState(const QByteArray &stateData, QObject *parent) : Q
   , m_coolantState(CoolantOff)
 {
     qDebug() << "Parse GrblGCodeState: " << stateData;
-    parse(stateData);
+    parseRawData(stateData);
 }
 
-void GrblGCodeState::parse(QByteArray stateData)
+bool GrblGCodeState::parseData()
 {
+    auto stateData = m_raw;
     qDebug() << "Parse GrblGCodeState: " << stateData;
 
-    if (stateData == m_raw) {
-        return;
-    }
-
     if (!stateData.startsWith(GCodeStatePrefix)) {
-        m_raw.clear();
-        emit isValidChanged();
-        return;
+        return false;
     }
 
     m_raw = stateData;
     stateData = stateData.trimmed();
     int dataLen = stateData.size() - GCodeStatePrefixLen - GCodeStatePostfixLen; //
     if (dataLen <= 0) {
-        m_raw.clear();
-        emit isValidChanged();
-        return;
+        return false;
     }
 
     stateData = stateData.mid(GCodeStatePrefixLen, dataLen);
@@ -214,5 +207,5 @@ void GrblGCodeState::parse(QByteArray stateData)
         setProperty(propertyName->second.data(), found->second);
     }
 
-    emit isValidChanged();
+    return true;
 }

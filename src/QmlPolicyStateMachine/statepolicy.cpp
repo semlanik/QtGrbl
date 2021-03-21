@@ -52,20 +52,28 @@ void StatePolicyCollection::execPolicy(StatePolicyAttached *policy)
         return;
     }
 
-    QString allowed = policy->allowed();
-    QString forbidden = policy->forbidden();
+    QStringList allowed = policy->allowed().split("|", Qt::SkipEmptyParts);
+    QStringList forbidden = policy->forbidden().split("|", Qt::SkipEmptyParts);
 
-    bool result = true;
-
-    qDebug() << "Execute policy for states: " << m_stateList << " allowed: " << allowed << " forbidden: " << forbidden;
-
-    if (!allowed.isEmpty() && !m_stateList.contains(allowed)) {
-        result = false;
+    bool result = allowed.isEmpty() || allowed.first().isEmpty();
+    for (auto policy : allowed) {
+        qDebug() << "check" <<  policy << "in " << m_stateList;
+        if (m_stateList.contains(policy)) {
+            result = true;
+            break;
+        }
     }
 
-    if (!forbidden.isEmpty() && m_stateList.contains(forbidden)) {
-        result = false;
+    for (auto policy : forbidden) {
+        qDebug() << "check" <<  policy << "in " << m_stateList;
+        if (m_stateList.contains(policy)) {
+            result = false;
+            break;
+        }
     }
 
+    qDebug() << "Execute policy for states: " << item->objectName() << "stateList:" << m_stateList
+             << " allowed: " << allowed << " forbidden: " << forbidden
+             << "result: " << result;
     item->setEnabled(result);
 }

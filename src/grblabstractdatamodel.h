@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2020 Alexey Edelev <semlanik@gmail.com>
+ * Copyright (c) 2021 Alexey Edelev <semlanik@gmail.com>
  *
  * This file is part of QtGrbl project https://github.com/semlanik/qtgrbl
  *
@@ -25,30 +25,34 @@
 
 #pragma once
 
-#include <QQmlEngine>
+#include <QByteArray>
+#include <QObject>
 
 namespace QtGrbl {
-    enum CommandPriority {
-        Back,     //! Push to end of queue(default)
-        Front,    //! Push to front of queue
-        Immediate //! Immediate send command without avaiting of previous acknowledge
-    };
 
-    template<typename T>
-    void qmlRegisterGrblSingleton(const char *typeName, std::shared_ptr<T> pointer) {
-        qmlRegisterSingletonType<T>("QtGrbl", 1, 0, typeName, [pointer](QQmlEngine *engine, QJSEngine *){
-            auto instance = pointer.get();
-            engine->setObjectOwnership(instance, QQmlEngine::CppOwnership);
-            return instance;
-        });
+class GrblAbstractDataModel : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(bool isValid READ isValid NOTIFY isValidChanged)
+
+public:
+    explicit GrblAbstractDataModel(QObject *parent = nullptr);
+    GrblAbstractDataModel(const GrblAbstractDataModel &other) {
+        if (this != &other) {
+            parseRawData(m_raw);
+        }
     }
 
-    const unsigned int GrblMaxCommandLineSize = 128;
+    void parseRawData(const QByteArray &data);
+    bool isValid() const {
+        return m_raw.isEmpty();
+    }
 
-    constexpr const char *GCodeStatePrefix = "[GC:";
-    constexpr const char *GCodeStatePostfix = "]";
-    constexpr const char *GrblStatusPrefix = "<";
-    constexpr const char *GrblStatePostfix = ">";
-    constexpr int GCodeStatePrefixLen = strlen(GCodeStatePrefix);
-    constexpr int GCodeStatePostfixLen = strlen(GCodeStatePostfix);
+signals:
+    void isValidChanged();
+
+protected:
+    virtual bool parseData() = 0;
+    QByteArray m_raw;
+};
 }

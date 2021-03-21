@@ -25,15 +25,15 @@
 
 #pragma once
 
+#include "grblabstractdatamodel.h"
+
 #include <QObject>
 #include <QByteArray>
 
 namespace QtGrbl {
-class GrblGCodeState : public QObject
+class GrblGCodeState : public GrblAbstractDataModel
 {
     Q_OBJECT
-
-    Q_PROPERTY(bool isValid READ isValid NOTIFY isValidChanged)
 
     Q_PROPERTY(int toolNumber READ toolNumber NOTIFY toolNumberChanged)
     Q_PROPERTY(qreal spindleSpeed READ spindleSpeed NOTIFY spindleSpeedChanged)
@@ -115,11 +115,6 @@ public:
 
     explicit GrblGCodeState(const QByteArray &stateData = {}, QObject *parent = nullptr);
     virtual ~GrblGCodeState() = default;
-
-    GrblGCodeState &fromRawData(const QByteArray& stateData) {
-        parse(stateData);
-        return *this;
-    }
 
     int toolNumber() const {
         return m_toolNumber;
@@ -318,9 +313,10 @@ signals:
     void cutterRadiusCompensationChanged();
     void arcIJKDistanceModeChanged();
 
-private:
-    void parse(QByteArray stateData);
+protected:
+    bool parseData() override;
 
+private:
     int m_toolNumber;
     qreal m_spindleSpeed;
     qreal m_feedRate;
