@@ -59,7 +59,7 @@ void GrblEngine::initStatusUpdates()
     m_statusTimer.setInterval(StatusUpdateInterval);
     m_statusTimer.setSingleShot(false);
     connect(&m_statusTimer, &QTimer::timeout, this, [this] {
-        emit sendCommand("?", CommandPriority::Immediate);
+        emit sendCommand(QByteArray("?"), CommandPriority::Realtime);
     });
 }
 
@@ -142,7 +142,7 @@ void GrblEngine::hold()
         return;
     }
     //Stop Spindle first
-    emit sendCommand(QByteArrayList() << "M5" << "!", CommandPriority::Immediate);
+    emit sendCommand(QByteArrayList() << "!", CommandPriority::Realtime);
 }
 
 void GrblEngine::resume()
@@ -152,7 +152,7 @@ void GrblEngine::resume()
         qCritical() << "Unable to resume, serial engine is null";
         return;
     }
-    emit sendCommand(QByteArrayList() << "~" << "?", CommandPriority::Immediate);
+    emit sendCommand(QByteArrayList() << "~", CommandPriority::Realtime);
     subscribeStatusUpdate();
 }
 
@@ -160,10 +160,10 @@ void GrblEngine::stop()
 {
     auto engine = m_serialEngine.lock();
     if (!engine) {
-        qCritical() << "Unable to resume, serial engine is null";
+        qCritical() << "Unable to stop, serial engine is null";
         return;
     }
-    emit sendCommand(QByteArrayList() << "M5" << "M0", CommandPriority::Immediate);
+    emit sendCommand(QByteArrayList() << "M5" << "M0", CommandPriority::Front);
     engine->clearCommandQueue();
 }
 
@@ -180,13 +180,13 @@ void GrblEngine::returnToZero()
 
 void GrblEngine::reset()
 {
-    emit sendCommand(QByteArray("\x18"), CommandPriority::Immediate);
+    emit sendCommand(QByteArray("\x18"), CommandPriority::Realtime);
 }
 
 void GrblEngine::updateGCodeState()
 {
     m_gcodeState->reset();
-    emit sendCommand(QByteArray("$G"), CommandPriority::Immediate);
+    emit sendCommand(QByteArray("$G"), CommandPriority::Front);
 }
 
 void GrblEngine::subscribeStatusUpdate()

@@ -50,11 +50,11 @@ public:
     }
 
     QByteArray take() {
-        int firstMessageLen = m_buffer.indexOf('\n') + 1;
-        if (firstMessageLen > 0) {
-            auto lastMessage = m_buffer.mid(0, firstMessageLen);
-            if (firstMessageLen < m_buffer.size()) {
-                m_buffer = m_buffer.mid(firstMessageLen);
+        int lastMessageLen = m_buffer.indexOf('\n') + 1;
+        if (lastMessageLen > 0) {
+            auto lastMessage = m_buffer.mid(0, lastMessageLen);
+            if (lastMessageLen < m_buffer.size()) {
+                m_buffer = m_buffer.mid(lastMessageLen);
             } else {
                 clear();
             }

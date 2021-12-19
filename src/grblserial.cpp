@@ -98,16 +98,14 @@ void GrblSerial::connectPort(int portIndex)
             qDebug() << "Raw data: "  << grblData.toHex();
             qDebug() << "String data: " << grblData;
 
-            auto lastMessage = m_sent.take();
-
             emit responseReceived(grblData);
             if (grblData == "ok\r\n") {
-                m_status = GrblSerial::Idle;
+                m_activeCommand.clear();
+                setStatus(GrblSerial::Idle);
                 processQueue();
             } else if (grblData.startsWith("error:")) {
-                m_status = GrblSerial::Error;
-                qCritical() << "Error occured: " << QString::fromLatin1(grblData);
-                qWarning() << "Last command: " << lastMessage;
+                setStatus(GrblSerial::Error);
+                qCritical() << "Error occured: " << QString::fromLatin1(grblData) << " active command: " << m_activeCommand;
             }
         }
     });
@@ -125,6 +123,7 @@ void GrblSerial::disconnectPort()
     }
     m_queue.clear();
     m_sent.clear();
+    setStatus(GrblSerial::Idle);
 }
 
 bool GrblSerial::isConnected() const
@@ -162,34 +161,26 @@ void GrblSerial::sendCommand(QByteArrayList commands, QtGrbl::CommandPriority pr
     }
 
     for (auto command : commands) {
-        if (command.startsWith(';') || command.startsWith("(")) {
+        if (command.startsWith(';') || command.startsWith("(")) { // Commands commented out
             qDebug() << "Skip command: " << command;
             continue;
         }
 
         command = command.trimmed();
+        qDebug() << "Send command: " << command << "Prio: " << prio;
+
+        if (prio == QtGrbl::CommandPriority::Realtime) {
+            write(command);
+            continue;
+        }
+
         command.append('\n'); /* TODO: add setting to switch carriage
                                * return symbol
                                */
-
-        qDebug() << "Send command: " << command << "Prio: " << prio;
-        switch (prio) {
-        case QtGrbl::CommandPriority::Immediate:
-            if (!m_sent.test(command)) {
-                // If last command size > 128 bytes, we cannot send Immediate command, because it would
-                // cause buffer overflow in grbl
-                m_queue.push_front(command);
-            } else {
-                write(command);
-                // No further queue processing.
-                return;
-            }
-        case QtGrbl::CommandPriority::Front:
+        if (prio == QtGrbl::CommandPriority::Front) {
             m_queue.push_front(command);
-            break;
-        default:
+        } else {
             m_queue.push_back(command);
-            break;
         }
     }
     processQueue();
@@ -197,7 +188,7 @@ void GrblSerial::sendCommand(QByteArrayList commands, QtGrbl::CommandPriority pr
 
 void GrblSerial::sendCommand(const QByteArray &command, QtGrbl::CommandPriority prio)
 {
-    sendCommand(QByteArrayList() << command);
+    sendCommand(QByteArrayList() << command, prio);
 }
 
 void GrblSerial::processQueue()
@@ -212,6 +203,7 @@ void GrblSerial::processQueue()
                 return;
             }
             write(buffer);
+            m_activeCommand = buffer;
             setStatus(GrblSerial::Busy);
         }
         break;
@@ -229,25 +221,29 @@ void GrblSerial::write(const QByteArray &buffer)
         return;
     }
 
+    qDebug() << "write buffer: " << buffer;
     if (m_port->write(buffer) != buffer.size()) {
         qCritical() << "Unable to write command buffer";
         return;
     }
 
     emit commandSent(buffer);
-    m_sent.push(buffer);
 }
 
 void GrblSerial::clearError()
 {
-    qWarning() << "Manual error unlock triggered";
-    setStatus(GrblSerial::Idle);
-    processQueue();
+    if (m_status == GrblSerial::Error) {
+        qWarning() << "Manual error unlock triggered";
+        setStatus(GrblSerial::Idle);
+        processQueue();
+    } else {
+        qWarning() << "Manual error unlock triggered but status is: " << m_status;
+    }
 }
 
 void GrblSerial::clearCommandQueue()
 {
     m_queue.clear();
     m_sent.clear();
-    sendCommand(QByteArray("\x85"), CommandPriority::Immediate);
+    sendCommand(QByteArray("\x85"), CommandPriority::Front);
 }

@@ -117,6 +117,7 @@ private:
     std::unique_ptr<QSerialPort> m_port;
     QQueue<QByteArray> m_queue; //! Pending messages queue
     GrblRemoteMessageBuffer m_sent; //! Messages are sent but, not processed
+    QByteArray m_activeCommand;
     int m_selectedPort;
 };
 

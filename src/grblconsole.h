@@ -144,7 +144,7 @@ private:
     std::list<QString> m_inputHistory;
     std::list<QString>::const_iterator m_inputHistoryPointer;
     QString m_recentInput;
-    bool m_noStatus;
+    bool m_noStatus = true;
 };
 
 }

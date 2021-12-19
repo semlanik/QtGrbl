@@ -31,7 +31,7 @@ namespace QtGrbl {
     enum CommandPriority {
         Back,     //! Push to end of queue(default)
         Front,    //! Push to front of queue
-        Immediate //! Immediate send command without avaiting of previous acknowledge
+        Realtime //! Realtime send command without avaiting of previous acknowledge
     };
 
     template<typename T>
@@ -43,7 +43,7 @@ namespace QtGrbl {
         });
     }
 
-    const unsigned int GrblMaxCommandLineSize = 128;
+    const unsigned int GrblMaxCommandLineSize = 128 - 2; //Allow sending realtime commands anytime
 
     constexpr const char *GCodeStatePrefix = "[GC:";
     constexpr const char *GCodeStatePostfix = "]";
